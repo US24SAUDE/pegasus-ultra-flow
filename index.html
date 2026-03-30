@@ -1,0 +1,1887 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0a0f1e">
+<title>Pegasus Ultra-Flow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════
+   DESIGN TOKENS
+═══════════════════════════════════════════════ */
+:root {
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+  --radius-sm: 8px;
+  --radius: 14px;
+  --radius-lg: 20px;
+  --transition: 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-bounce: 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* DARK THEME (default) */
+[data-theme="dark"] {
+  --bg:        #080d18;
+  --bg2:       #0d1526;
+  --surface:   #111827;
+  --surface2:  #1a2235;
+  --surface3:  #1f2a40;
+  --border:    rgba(255,255,255,0.07);
+  --border2:   rgba(255,255,255,0.12);
+  --text:      #f0f4ff;
+  --text2:     #94a3b8;
+  --text3:     #64748b;
+  --accent:    #3b82f6;
+  --accent2:   #6366f1;
+  --accent3:   #8b5cf6;
+  --gold:      #f59e0b;
+  --green:     #10b981;
+  --red:       #ef4444;
+  --glow:      rgba(99,102,241,0.25);
+  --glow2:     rgba(59,130,246,0.15);
+  --header-bg: rgba(8,13,24,0.85);
+}
+
+/* LIGHT THEME */
+[data-theme="light"] {
+  --bg:        #f0f4ff;
+  --bg2:       #e8eef8;
+  --surface:   #ffffff;
+  --surface2:  #f8faff;
+  --surface3:  #eef2fb;
+  --border:    rgba(0,0,0,0.07);
+  --border2:   rgba(0,0,0,0.12);
+  --text:      #0f172a;
+  --text2:     #475569;
+  --text3:     #94a3b8;
+  --accent:    #2563eb;
+  --accent2:   #4f46e5;
+  --accent3:   #7c3aed;
+  --gold:      #d97706;
+  --green:     #059669;
+  --red:       #dc2626;
+  --glow:      rgba(79,70,229,0.12);
+  --glow2:     rgba(37,99,235,0.08);
+  --header-bg: rgba(240,244,255,0.9);
+}
+
+/* ═══════════════════════════════════════════════
+   RESET & BASE
+═══════════════════════════════════════════════ */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+html { height: 100%; overflow: hidden; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  height: 100%;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  transition: background var(--transition), color var(--transition);
+}
+
+/* ═══════════════════════════════════════════════
+   BACKGROUND AMBIENT
+═══════════════════════════════════════════════ */
+.ambient {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+.ambient-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.12;
+  animation: orb-float 12s ease-in-out infinite;
+}
+.ambient-orb:nth-child(1) {
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, #6366f1, transparent);
+  top: -200px; left: -100px;
+  animation-delay: 0s;
+}
+.ambient-orb:nth-child(2) {
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, #3b82f6, transparent);
+  bottom: -150px; right: -100px;
+  animation-delay: -4s;
+}
+.ambient-orb:nth-child(3) {
+  width: 300px; height: 300px;
+  background: radial-gradient(circle, #8b5cf6, transparent);
+  top: 40%; left: 50%;
+  animation-delay: -8s;
+}
+[data-theme="light"] .ambient-orb { opacity: 0.06; }
+
+@keyframes orb-float {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(30px, -20px) scale(1.05); }
+  66% { transform: translate(-20px, 30px) scale(0.95); }
+}
+
+/* ═══════════════════════════════════════════════
+   LAYOUT COCKPIT
+═══════════════════════════════════════════════ */
+.app {
+  position: relative;
+  z-index: 1;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── HEADER ── */
+.header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  height: 56px;
+  background: var(--header-bg);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid var(--border);
+  position: relative;
+  z-index: 50;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+}
+.logo-icon {
+  width: 32px; height: 32px;
+  background: linear-gradient(135deg, var(--accent2), var(--accent3));
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  box-shadow: 0 0 16px var(--glow);
+  flex-shrink: 0;
+}
+.logo-text {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, var(--accent), var(--accent3));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.logo-version {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text3);
+  background: var(--surface3);
+  border: 1px solid var(--border2);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: var(--mono);
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon-btn {
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  transition: all var(--transition);
+  flex-shrink: 0;
+}
+.icon-btn:hover {
+  background: var(--surface3);
+  border-color: var(--border2);
+  color: var(--text);
+  transform: scale(1.05);
+}
+.icon-btn:active { transform: scale(0.95); }
+
+/* ── COCKPIT BODY ── */
+.cockpit {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 360px;
+  overflow: hidden;
+  min-height: 0;
+}
+
+/* ── LEFT COLUMN ── */
+.col-left {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: 20px;
+  gap: 16px;
+  scroll-behavior: smooth;
+}
+.col-left::-webkit-scrollbar { width: 4px; }
+.col-left::-webkit-scrollbar-track { background: transparent; }
+.col-left::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+
+/* ── RIGHT COLUMN ── */
+.col-right {
+  border-left: 1px solid var(--border);
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ═══════════════════════════════════════════════
+   CARDS
+═══════════════════════════════════════════════ */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  transition: border-color var(--transition), box-shadow var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--glow2), transparent);
+  opacity: 0;
+  transition: opacity var(--transition);
+  pointer-events: none;
+}
+.card:hover::before { opacity: 1; }
+.card:hover { border-color: var(--border2); }
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.card-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text3);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.card-title-icon {
+  width: 22px; height: 22px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, var(--accent2), var(--accent3));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════════════════
+   OCR ZONE
+═══════════════════════════════════════════════ */
+.ocr-zone {
+  border: 2px dashed var(--border2);
+  border-radius: var(--radius);
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all var(--transition));
+  position: relative;
+  overflow: hidden;
+  background: var(--surface2);
+}
+.ocr-zone:hover, .ocr-zone.drag-over {
+  border-color: var(--accent2);
+  background: var(--surface3);
+  box-shadow: 0 0 0 4px var(--glow);
+}
+.ocr-zone input[type=file] {
+  position: absolute; inset: 0;
+  opacity: 0; cursor: pointer;
+}
+.ocr-icon-wrap {
+  width: 48px; height: 48px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--accent2), var(--accent3));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  margin: 0 auto 12px;
+  box-shadow: 0 4px 16px var(--glow);
+  transition: transform var(--transition-bounce);
+}
+.ocr-zone:hover .ocr-icon-wrap { transform: scale(1.1) rotate(-5deg); }
+.ocr-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+.ocr-sub { font-size: 12px; color: var(--text2); }
+.ocr-sub strong { color: var(--accent); }
+
+.ocr-result {
+  display: none;
+  margin-top: 14px;
+  padding: 12px;
+  background: var(--surface3);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  animation: slide-in 0.3s ease;
+}
+.ocr-result.visible { display: flex; gap: 12px; align-items: flex-start; }
+.ocr-thumb {
+  width: 56px; height: 56px;
+  object-fit: cover;
+  border-radius: 8px;
+  flex-shrink: 0;
+  border: 1px solid var(--border2);
+}
+.ocr-data { flex: 1; min-width: 0; }
+.ocr-data-row { font-size: 12px; color: var(--text2); margin-bottom: 2px; }
+.ocr-data-row strong { color: var(--text); }
+
+/* ═══════════════════════════════════════════════
+   FORM ELEMENTS
+═══════════════════════════════════════════════ */
+.form-grid-2 { display: grid; grid-template-columns: 1fr 90px; gap: 12px; }
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+
+label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text3);
+}
+
+input[type=text], input[type=number], input[type=password], textarea, select {
+  font-family: var(--font);
+  font-size: 14px;
+  color: var(--text);
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 10px 13px;
+  width: 100%;
+  transition: all var(--transition);
+  outline: none;
+  -webkit-appearance: none;
+}
+input:focus, textarea:focus, select:focus {
+  border-color: var(--accent2);
+  background: var(--surface3);
+  box-shadow: 0 0 0 3px var(--glow);
+}
+input::placeholder, textarea::placeholder { color: var(--text3); }
+textarea { resize: vertical; min-height: 100px; line-height: 1.65; font-size: 13px; }
+
+/* ═══════════════════════════════════════════════
+   VOICE SECTION
+═══════════════════════════════════════════════ */
+.voice-cockpit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 0;
+}
+
+.voice-btn-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.voice-ring {
+  position: absolute;
+  width: 100px; height: 100px;
+  border-radius: 50%;
+  border: 2px solid var(--accent2);
+  opacity: 0;
+  transform: scale(0.8);
+  transition: all var(--transition);
+}
+.voice-ring-2 {
+  position: absolute;
+  width: 120px; height: 120px;
+  border-radius: 50%;
+  border: 1px solid var(--accent3);
+  opacity: 0;
+  transform: scale(0.8);
+  transition: all var(--transition);
+}
+.recording .voice-ring {
+  opacity: 0.4;
+  animation: ring-pulse 1.5s ease-in-out infinite;
+}
+.recording .voice-ring-2 {
+  opacity: 0.2;
+  animation: ring-pulse 1.5s ease-in-out infinite 0.3s;
+}
+@keyframes ring-pulse {
+  0%, 100% { transform: scale(0.9); opacity: 0.4; }
+  50% { transform: scale(1.2); opacity: 0; }
+}
+
+.voice-btn {
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent2), var(--accent3));
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  transition: all var(--transition-bounce);
+  box-shadow: 0 4px 24px var(--glow), 0 0 0 0 var(--glow);
+  position: relative;
+  z-index: 1;
+  flex-shrink: 0;
+}
+.voice-btn:hover { transform: scale(1.06); box-shadow: 0 8px 32px var(--glow); }
+.voice-btn:active { transform: scale(0.94); }
+.voice-btn.recording {
+  background: linear-gradient(135deg, #ef4444, #f97316);
+  box-shadow: 0 4px 24px rgba(239,68,68,0.4);
+  animation: btn-breathe 1.8s ease-in-out infinite;
+}
+@keyframes btn-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+}
+
+.voice-status {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text2);
+  text-align: center;
+  min-height: 20px;
+  transition: color var(--transition);
+}
+.voice-status.active { color: var(--red); }
+
+.voice-waveform {
+  display: none;
+  align-items: center;
+  gap: 3px;
+  height: 28px;
+}
+.voice-waveform.visible { display: flex; }
+.wave-bar {
+  width: 3px;
+  background: var(--accent2);
+  border-radius: 2px;
+  animation: wave-anim 0.8s ease-in-out infinite;
+}
+.wave-bar:nth-child(1) { height: 8px; animation-delay: 0s; }
+.wave-bar:nth-child(2) { height: 16px; animation-delay: 0.1s; }
+.wave-bar:nth-child(3) { height: 24px; animation-delay: 0.2s; }
+.wave-bar:nth-child(4) { height: 18px; animation-delay: 0.3s; }
+.wave-bar:nth-child(5) { height: 12px; animation-delay: 0.4s; }
+.wave-bar:nth-child(6) { height: 20px; animation-delay: 0.15s; }
+.wave-bar:nth-child(7) { height: 10px; animation-delay: 0.25s; }
+@keyframes wave-anim {
+  0%, 100% { transform: scaleY(0.4); opacity: 0.6; }
+  50% { transform: scaleY(1); opacity: 1; }
+}
+
+.voice-transcript {
+  width: 100%;
+  font-size: 13px;
+  color: var(--text);
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  min-height: 56px;
+  line-height: 1.65;
+  display: none;
+  font-style: italic;
+  animation: slide-in 0.3s ease;
+}
+.voice-transcript.visible { display: block; }
+
+/* ═══════════════════════════════════════════════
+   BUTTONS
+═══════════════════════════════════════════════ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 11px 18px;
+  border-radius: var(--radius-sm);
+  border: none;
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+  position: relative;
+  overflow: hidden;
+}
+.btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255,255,255,0);
+  transition: background var(--transition);
+}
+.btn:hover::after { background: rgba(255,255,255,0.06); }
+.btn:active { transform: scale(0.97); }
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent2), var(--accent3));
+  color: white;
+  box-shadow: 0 2px 12px var(--glow);
+}
+.btn-primary:hover { box-shadow: 0 4px 20px var(--glow); transform: translateY(-1px); }
+
+.btn-ghost {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text2);
+}
+.btn-ghost:hover { border-color: var(--border2); color: var(--text); }
+
+.btn-success {
+  background: linear-gradient(135deg, #059669, #10b981);
+  color: white;
+  box-shadow: 0 2px 12px rgba(16,185,129,0.25);
+}
+.btn-success:hover { box-shadow: 0 4px 20px rgba(16,185,129,0.35); transform: translateY(-1px); }
+
+.btn-danger {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--red);
+}
+.btn-danger:hover { background: rgba(239,68,68,0.1); border-color: var(--red); }
+
+.btn-gold {
+  background: linear-gradient(135deg, #d97706, #f59e0b);
+  color: white;
+  box-shadow: 0 2px 12px rgba(245,158,11,0.25);
+}
+
+.btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn-full { width: 100%; }
+
+/* ═══════════════════════════════════════════════
+   LAUDO OUTPUT
+═══════════════════════════════════════════════ */
+.laudo-output {
+  display: none;
+  animation: slide-in 0.4s ease;
+}
+.laudo-output.visible { display: block; }
+
+.laudo-box {
+  background: linear-gradient(135deg, rgba(99,102,241,0.08), rgba(139,92,246,0.04));
+  border: 1px solid rgba(99,102,241,0.25);
+  border-radius: var(--radius);
+  padding: 16px;
+  font-size: 13px;
+  line-height: 1.75;
+  white-space: pre-wrap;
+  color: var(--text);
+  font-family: var(--mono);
+  max-height: 200px;
+  overflow-y: auto;
+  position: relative;
+  margin-bottom: 14px;
+}
+.laudo-box::-webkit-scrollbar { width: 3px; }
+.laudo-box::-webkit-scrollbar-thumb { background: var(--accent2); border-radius: 2px; }
+
+.laudo-box-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.laudo-box-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--accent2);
+}
+.copy-btn {
+  font-size: 11px;
+  padding: 4px 10px;
+  background: rgba(99,102,241,0.15);
+  border: 1px solid rgba(99,102,241,0.3);
+  border-radius: 6px;
+  color: var(--accent2);
+  cursor: pointer;
+  transition: all var(--transition);
+  font-family: var(--font);
+  font-weight: 600;
+}
+.copy-btn:hover { background: rgba(99,102,241,0.25); }
+
+/* ═══════════════════════════════════════════════
+   RIGHT PANEL — TABS
+═══════════════════════════════════════════════ */
+.right-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  padding: 0 4px;
+}
+.right-tab {
+  flex: 1;
+  padding: 13px 8px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text3);
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.right-tab:hover { color: var(--text2); }
+.right-tab.active { color: var(--accent2); border-bottom-color: var(--accent2); }
+
+.right-panel {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px;
+  display: none;
+}
+.right-panel.active { display: block; }
+.right-panel::-webkit-scrollbar { width: 3px; }
+.right-panel::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+/* ═══════════════════════════════════════════════
+   SNIPPETS
+═══════════════════════════════════════════════ */
+.snippet-search-wrap {
+  position: relative;
+  margin-bottom: 14px;
+}
+.snippet-search-wrap input {
+  padding-left: 34px;
+  font-size: 13px;
+}
+.snippet-search-icon {
+  position: absolute;
+  left: 11px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text3);
+  font-size: 14px;
+  pointer-events: none;
+}
+
+.snippet-category { margin-bottom: 18px; }
+.snippet-cat-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text3);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.snippet-cat-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  padding: 5px 11px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition));
+  color: var(--text2);
+  white-space: nowrap;
+}
+.chip:hover {
+  background: var(--surface3);
+  border-color: var(--accent2);
+  color: var(--accent2);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px var(--glow);
+}
+.chip:active { transform: translateY(0) scale(0.97); }
+
+/* ═══════════════════════════════════════════════
+   HISTORY
+═══════════════════════════════════════════════ */
+.history-item {
+  padding: 12px 14px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+.history-item::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: linear-gradient(to bottom, var(--accent2), var(--accent3));
+  transform: scaleY(0);
+  transition: transform var(--transition);
+  border-radius: 0 2px 2px 0;
+}
+.history-item:hover { border-color: var(--border2); }
+.history-item:hover::before { transform: scaleY(1); }
+.history-name { font-size: 13px; font-weight: 600; margin-bottom: 3px; }
+.history-meta { font-size: 11px; color: var(--text3); }
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text3);
+}
+.empty-state-icon { font-size: 32px; margin-bottom: 10px; opacity: 0.5; }
+.empty-state-text { font-size: 13px; }
+
+/* ═══════════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════════ */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+  pointer-events: none;
+}
+.toast {
+  padding: 10px 18px;
+  border-radius: 30px;
+  font-size: 13px;
+  font-weight: 600;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border2);
+  background: var(--surface2);
+  color: var(--text);
+  transform: translateY(20px);
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  white-space: nowrap;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast.success { color: var(--green); border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.1); }
+.toast.error { color: var(--red); border-color: rgba(239,68,68,0.3); background: rgba(239,68,68,0.1); }
+.toast.info { color: var(--accent); border-color: rgba(59,130,246,0.3); background: rgba(59,130,246,0.1); }
+
+/* ═══════════════════════════════════════════════
+   LOADING OVERLAY
+═══════════════════════════════════════════════ */
+.loading-overlay {
+  position: fixed; inset: 0;
+  background: rgba(8,13,24,0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 500;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 20px;
+}
+[data-theme="light"] .loading-overlay { background: rgba(240,244,255,0.75); }
+.loading-overlay.open { display: flex; }
+
+.loading-spinner {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent2), var(--accent3));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  animation: spin-glow 1.2s linear infinite;
+  box-shadow: 0 0 32px var(--glow);
+}
+@keyframes spin-glow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.loading-text {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--accent2);
+  letter-spacing: -0.01em;
+}
+.loading-sub { font-size: 12px; color: var(--text3); }
+
+/* ═══════════════════════════════════════════════
+   MODAL
+═══════════════════════════════════════════════ */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-lg);
+  padding: 28px;
+  width: 100%;
+  max-width: 440px;
+  animation: modal-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 24px 64px rgba(0,0,0,0.4);
+}
+@keyframes modal-in {
+  from { transform: scale(0.85) translateY(20px); opacity: 0; }
+  to { transform: scale(1) translateY(0); opacity: 1; }
+}
+.modal-icon {
+  width: 52px; height: 52px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, var(--accent2), var(--accent3));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  margin-bottom: 16px;
+  box-shadow: 0 4px 16px var(--glow);
+}
+.modal h2 { font-size: 20px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.02em; }
+.modal p { font-size: 13px; color: var(--text2); margin-bottom: 20px; line-height: 1.65; }
+.modal a { color: var(--accent); text-decoration: none; font-weight: 600; }
+.modal a:hover { text-decoration: underline; }
+
+/* ═══════════════════════════════════════════════
+   ANIMATIONS
+═══════════════════════════════════════════════ */
+@keyframes slide-in {
+  from { transform: translateY(10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ═══════════════════════════════════════════════
+   THEME TOGGLE
+═══════════════════════════════════════════════ */
+.theme-toggle {
+  position: relative;
+  width: 44px; height: 24px;
+  border-radius: 12px;
+  background: var(--surface3);
+  border: 1px solid var(--border2);
+  cursor: pointer;
+  transition: all var(--transition);
+  flex-shrink: 0;
+}
+.theme-toggle::after {
+  content: '';
+  position: absolute;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent2), var(--accent3));
+  top: 2px; left: 2px;
+  transition: transform var(--transition-bounce);
+  box-shadow: 0 2px 6px var(--glow);
+}
+[data-theme="light"] .theme-toggle::after { transform: translateX(20px); }
+
+/* ═══════════════════════════════════════════════
+   MOBILE — BOTTOM NAV
+═══════════════════════════════════════════════ */
+.bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 64px;
+  background: var(--header-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid var(--border);
+  z-index: 100;
+  padding: 0 8px;
+  align-items: center;
+  justify-content: space-around;
+}
+.bottom-nav-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 8px 16px;
+  background: none;
+  border: none;
+  color: var(--text3);
+  cursor: pointer;
+  transition: all var(--transition);
+  border-radius: var(--radius-sm);
+  min-width: 60px;
+}
+.bottom-nav-btn.active { color: var(--accent2); }
+.bottom-nav-btn span:first-child { font-size: 20px; }
+.bottom-nav-btn span:last-child { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+
+/* ═══════════════════════════════════════════════
+   MOBILE RESPONSIVE
+═══════════════════════════════════════════════ */
+@media (max-width: 900px) {
+  html, body { overflow: hidden; height: 100%; }
+
+  .cockpit {
+    grid-template-columns: 1fr;
+    height: calc(100vh - 56px - 64px);
+  }
+
+  .col-right {
+    display: none;
+    position: fixed;
+    inset: 56px 0 64px 0;
+    z-index: 40;
+    border-left: none;
+    border-top: 1px solid var(--border);
+  }
+  .col-right.mobile-visible { display: flex; }
+
+  .col-left {
+    height: 100%;
+    padding: 14px;
+    gap: 12px;
+  }
+
+  .bottom-nav { display: flex; }
+
+  .logo-version { display: none; }
+
+  .form-grid-2 { grid-template-columns: 1fr 80px; }
+
+  .voice-btn { width: 72px; height: 72px; font-size: 26px; }
+  .voice-ring { width: 90px; height: 90px; }
+  .voice-ring-2 { width: 108px; height: 108px; }
+}
+
+@media (max-width: 480px) {
+  .header { padding: 0 14px; }
+  .col-left { padding: 12px; gap: 10px; }
+  .card { padding: 14px 16px; }
+  .btn { padding: 10px 14px; font-size: 12px; }
+  .modal { padding: 22px; }
+}
+
+/* ═══════════════════════════════════════════════
+   PRINT
+═══════════════════════════════════════════════ */
+@media print {
+  body { background: white; color: black; }
+  .header, .col-right, .bottom-nav, .voice-cockpit,
+  .ocr-zone, .btn-row, .loading-overlay { display: none !important; }
+  .col-left { overflow: visible; }
+  .card { border: 1px solid #ddd; box-shadow: none; }
+}
+
+/* ═══════════════════════════════════════════════
+   DIVIDER
+═══════════════════════════════════════════════ */
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0;
+}
+
+/* STATUS DOT */
+.status-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 6px rgba(16,185,129,0.6);
+  animation: dot-pulse 2s ease-in-out infinite;
+  flex-shrink: 0;
+}
+@keyframes dot-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+</style>
+</head>
+<body>
+
+<!-- AMBIENT BACKGROUND -->
+<div class="ambient">
+  <div class="ambient-orb"></div>
+  <div class="ambient-orb"></div>
+  <div class="ambient-orb"></div>
+</div>
+
+<!-- APP -->
+<div class="app">
+
+  <!-- ── HEADER ── -->
+  <header class="header">
+    <div class="logo">
+      <div class="logo-icon">✦</div>
+      <span class="logo-text">Pegasus Ultra-Flow</span>
+      <span class="logo-version">v2.0</span>
+    </div>
+    <div class="header-actions">
+      <div class="status-dot" title="Online"></div>
+      <button class="theme-toggle" onclick="toggleTheme()" title="Alternar tema" aria-label="Alternar tema claro/escuro"></button>
+      <button class="icon-btn" onclick="openApiModal()" title="Configurar chave Gemini">⚙</button>
+    </div>
+  </header>
+
+  <!-- ── COCKPIT ── -->
+  <div class="cockpit">
+
+    <!-- ════ LEFT COLUMN ════ -->
+    <div class="col-left" id="colLeft">
+
+      <!-- OCR DO PEDIDO -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <div class="card-title-icon">📸</div>
+            Pedido do Paciente
+          </div>
+        </div>
+        <div class="ocr-zone" id="ocrZone">
+          <input type="file" id="ocrInput" accept="image/*" capture="environment" onchange="handleOCR(event)">
+          <div class="ocr-icon-wrap">📷</div>
+          <div class="ocr-title">Fotografe ou arraste o pedido</div>
+          <div class="ocr-sub">O <strong>Gemini Vision</strong> extrai os dados automaticamente</div>
+        </div>
+        <div class="ocr-result" id="ocrResult">
+          <img id="ocrThumb" class="ocr-thumb" alt="">
+          <div class="ocr-data" id="ocrData"></div>
+        </div>
+      </div>
+
+      <!-- DADOS DO PACIENTE -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <div class="card-title-icon">👤</div>
+            Dados do Paciente
+          </div>
+        </div>
+        <div class="form-grid-2" style="margin-bottom:12px">
+          <div class="form-group">
+            <label>Nome</label>
+            <input type="text" id="nomePaciente" placeholder="Preenchido via OCR ou manual">
+          </div>
+          <div class="form-group">
+            <label>Idade</label>
+            <input type="number" id="idade" placeholder="Anos" min="0" max="150">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Tipo de Exame</label>
+          <input type="text" id="tipoExame" placeholder="Ex: USG Abdome Total, Doppler Venoso...">
+        </div>
+      </div>
+
+      <!-- DITADO POR VOZ -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">
+            <div class="card-title-icon">🎙</div>
+            Ditado por Voz
+          </div>
+          <button class="btn btn-ghost" style="padding:5px 10px;font-size:11px" onclick="limparVoz()">Limpar</button>
+        </div>
+        <div class="voice-cockpit" id="voiceCockpit">
+          <div class="voice-btn-wrap">
+            <div class="voice-ring"></div>
+            <div class="voice-ring-2"></div>
+            <button class="voice-btn" id="voiceBtn" onclick="toggleVoice()" aria-label="Gravar voz">🎙</button>
+          </div>
+          <div class="voice-waveform" id="voiceWaveform">
+            <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+            <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+            <div class="wave-bar"></div>
+          </div>
+          <div class="voice-status" id="voiceStatus">Pressione e fale os achados</div>
+          <div class="voice-transcript" id="voiceTranscript"></div>
+        </div>
+        <div class="btn-row" style="margin-top:14px">
+          <button class="btn btn-primary btn-full" onclick="gerarLaudo()" id="btnGerar">
+            ✦ Gerar Laudo com IA
+          </button>
+        </div>
+      </div>
+
+      <!-- LAUDO GERADO -->
+      <div class="card laudo-output" id="laudoOutput">
+        <div class="card-header">
+          <div class="card-title">
+            <div class="card-title-icon">📋</div>
+            Laudo Gerado
+          </div>
+        </div>
+        <div class="laudo-box-header">
+          <span class="laudo-box-label">Achados + Conclusão</span>
+          <button class="copy-btn" onclick="copiarLaudo()">Copiar tudo</button>
+        </div>
+        <div class="laudo-box" id="laudoBox"></div>
+        <div class="form-group" style="margin-bottom:12px">
+          <label>Achados Ultrassonográficos</label>
+          <textarea id="achados" placeholder="Gerado pela IA ou edite manualmente..."></textarea>
+        </div>
+        <div class="form-group" style="margin-bottom:14px">
+          <label>Conclusão</label>
+          <textarea id="conclusao" placeholder="Conclusão do laudo..." style="min-height:72px"></textarea>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-success" onclick="salvarLaudo()">💾 Salvar</button>
+          <button class="btn btn-gold" onclick="imprimirLaudo()">🖨 Imprimir</button>
+          <button class="btn btn-ghost" onclick="novoLaudo()">+ Novo</button>
+        </div>
+      </div>
+
+    </div><!-- /col-left -->
+
+    <!-- ════ RIGHT COLUMN ════ -->
+    <div class="col-right" id="colRight">
+      <div class="right-tabs">
+        <button class="right-tab active" onclick="switchRightTab('snippets', this)">Snippets</button>
+        <button class="right-tab" onclick="switchRightTab('historico', this)">Histórico</button>
+      </div>
+
+      <!-- SNIPPETS PANEL -->
+      <div class="right-panel active" id="panel-snippets">
+        <div class="snippet-search-wrap">
+          <span class="snippet-search-icon">🔍</span>
+          <input type="text" placeholder="Buscar snippet..." oninput="filtrarSnippets(this.value)">
+        </div>
+        <div id="snippetsList"></div>
+      </div>
+
+      <!-- HISTÓRICO PANEL -->
+      <div class="right-panel" id="panel-historico">
+        <div id="historicoList"></div>
+      </div>
+    </div><!-- /col-right -->
+
+  </div><!-- /cockpit -->
+
+  <!-- BOTTOM NAV (mobile) -->
+  <nav class="bottom-nav">
+    <button class="bottom-nav-btn active" id="nav-laudo" onclick="mobileNav('laudo', this)">
+      <span>📋</span><span>Laudo</span>
+    </button>
+    <button class="bottom-nav-btn" id="nav-snippets" onclick="mobileNav('snippets', this)">
+      <span>⚡</span><span>Snippets</span>
+    </button>
+    <button class="bottom-nav-btn" id="nav-historico" onclick="mobileNav('historico', this)">
+      <span>🕐</span><span>Histórico</span>
+    </button>
+  </nav>
+
+</div><!-- /app -->
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- LOADING OVERLAY -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner">✦</div>
+  <div class="loading-text" id="loadingText">Processando...</div>
+  <div class="loading-sub" id="loadingSub">Aguarde um momento</div>
+</div>
+
+<!-- API KEY MODAL -->
+<div class="modal-overlay" id="apiModal">
+  <div class="modal">
+    <div class="modal-icon">🔑</div>
+    <h2>Chave da API Gemini</h2>
+    <p>Para usar a IA, você precisa de uma chave gratuita do Google Gemini.<br>
+    Obtenha em: <a href="https://aistudio.google.com/apikey" target="_blank">aistudio.google.com/apikey</a></p>
+    <div class="form-group" style="margin-bottom:16px">
+      <label>Sua Chave API</label>
+      <input type="password" id="apiKeyInput" placeholder="AIzaSy...">
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="salvarApiKey()">Salvar chave</button>
+      <button class="btn btn-ghost" onclick="closeApiModal()">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// ═══════════════════════════════════════════════
+// CONFIG & STATE
+// ═══════════════════════════════════════════════
+const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+let recognition = null;
+let isRecording = false;
+let voiceTranscript = '';
+let currentLaudoText = '';
+
+const getApiKey = () => localStorage.getItem('puf_api_key') || '';
+
+// ═══════════════════════════════════════════════
+// SNIPPETS (111 completos)
+// ═══════════════════════════════════════════════
+const SNIPPETS = {
+  'Abdome': [
+    {t:'Abdome Normal', v:'Fígado de morfologia, contornos e dimensões normais, com ecotextura e ecogenicidade preservadas. Lobo direito medindo 14,5 cm (VR até 15 cm). Veia porta de calibre normal (0,9 cm). Vesícula biliar de paredes finas e lisas, sem cálculos. Vias biliares intra e extra-hepáticas de calibres normais. Pâncreas de dimensões e ecotextura habituais. Baço de dimensões normais, medindo 10,5 cm. Rins de morfologia e contornos normais, com diferenciação corticomedular preservada, sem cálculos ou dilatações. Aorta de calibre normal. Ausência de líquido livre intraperitoneal.'},
+    {t:'Esteatose Leve', v:'Fígado com discreto aumento difuso da ecogenicidade do parênquima hepático, com leve atenuação do feixe sonoro, compatível com esteatose hepática leve.'},
+    {t:'Esteatose Moderada', v:'Fígado com aumento difuso da ecogenicidade do parênquima hepático, com atenuação moderada do feixe sonoro e discreta dificuldade de visualização dos vasos intra-hepáticos, compatível com esteatose hepática moderada.'},
+    {t:'Esteatose Acentuada', v:'Fígado com aumento difuso e acentuado da ecogenicidade, com importante atenuação do feixe sonoro e dificuldade de visualização dos vasos intra-hepáticos, compatível com esteatose hepática acentuada.'},
+    {t:'Hepatomegalia', v:'Fígado de dimensões aumentadas, com lobo direito medindo ___cm (VR até 15 cm). Ecotextura e ecogenicidade preservadas.'},
+    {t:'Cirrose Hepática', v:'Fígado de dimensões reduzidas, com contornos irregulares e nodulares, ecotextura heterogênea e ecogenicidade aumentada, compatível com hepatopatia crônica/cirrose hepática. Sinais de hipertensão portal: esplenomegalia e veia porta medindo ___cm.'},
+    {t:'Hemangioma', v:'Imagem nodular hiperecóica, de contornos bem definidos, medindo ___cm, localizada no segmento ___ do fígado, compatível com hemangioma hepático.'},
+    {t:'Cisto Hepático', v:'Imagem cística simples, anecóica, de paredes finas e lisas, sem septos, medindo ___cm, no segmento ___ do fígado, compatível com cisto hepático simples.'},
+    {t:'Colecistite Aguda', v:'Vesícula biliar distendida, com paredes espessadas medindo ___mm (VR até 3mm), conteúdo heterogêneo, cálculo impactado no colo medindo ___mm. Sinal de Murphy ultrassonográfico positivo. Compatível com colecistite aguda calculosa.'},
+    {t:'Colelitíase', v:'Vesícula biliar com cálculo(s) medindo ___mm, com sombra acústica posterior. Paredes finas. Sem sinais de colecistite aguda.'},
+    {t:'Coledocolitíase', v:'Dilatação da via biliar principal medindo ___cm (VR até 0,7 cm), com imagem hiperecóica com sombra acústica no seu interior medindo ___mm, compatível com coledocolitíase.'},
+    {t:'Dilatação Vias Biliares', v:'Dilatação das vias biliares intra-hepáticas. Via biliar principal dilatada medindo ___cm (VR até 0,7 cm). Investigar causa obstrutiva.'},
+    {t:'Pancreatite Aguda', v:'Pâncreas com dimensões aumentadas, contornos imprecisos, ecotextura heterogênea e ecogenicidade reduzida, com líquido peripancreático. Compatível com pancreatite aguda.'},
+    {t:'Pancreatite Crônica', v:'Pâncreas com dimensões reduzidas, contornos irregulares, ecotextura heterogênea com calcificações dispersas, compatível com pancreatite crônica.'},
+    {t:'Neoplasia Pancreática', v:'Imagem hipoecóica, de contornos irregulares, medindo ___cm, na cabeça/corpo/cauda do pâncreas, com dilatação do ducto de Wirsung. Suspeita de neoplasia pancreática. Correlacionar com tomografia.'},
+    {t:'Esplenomegalia', v:'Baço de dimensões aumentadas, medindo ___cm em seu maior eixo longitudinal (VR até 12 cm), com ecotextura e ecogenicidade preservadas.'},
+    {t:'Cisto Esplênico', v:'Imagem cística simples no baço, anecóica, de paredes finas, sem septos, medindo ___cm, compatível com cisto esplênico simples.'},
+    {t:'Ascite Leve', v:'Pequena quantidade de líquido livre na cavidade peritoneal, evidenciado em fundo de saco de Douglas e goteiras parieto-cólicas.'},
+    {t:'Ascite Moderada', v:'Moderada quantidade de líquido livre na cavidade peritoneal, distribuído difusamente pelo abdome.'},
+    {t:'Ascite Volumosa', v:'Grande quantidade de líquido livre na cavidade peritoneal (ascite volumosa), com alças intestinais flutuando.'},
+    {t:'Apendicite Aguda', v:'Apêndice cecal na fossa ilíaca direita, com diâmetro aumentado medindo ___mm (VR até 6mm), paredes espessadas, não compressível, com hipervascularização ao Doppler. Líquido livre perivisceral. Compatível com apendicite aguda.'},
+    {t:'Apendicite Complicada', v:'Apêndice cecal com diâmetro aumentado medindo ___mm, paredes espessadas e irregulares. Coleção periapendicular medindo ___cm. Compatível com apendicite aguda complicada (perfuração/abscesso periapendicular).'},
+    {t:'Bile Espessa', v:'Vesícula biliar com conteúdo espesso e heterogêneo (lama biliar/barro biliar), sem cálculos definidos.'},
+    {t:'Pólipo Vesicular', v:'Vesícula biliar com imagem hiperecóica séssil, sem sombra acústica, medindo ___mm, compatível com pólipo vesicular. Controle em 6 meses.'},
+    {t:'Nódulo Hepático', v:'Imagem nodular ___ecóica, de contornos ___, medindo ___cm, no segmento ___ do fígado. Correlacionar com ressonância magnética.'},
+    {t:'Diverticulite', v:'Espessamento parietal segmentar do cólon sigmoide, com gordura pericolônica hiperecóica e líquido livre local. Compatível com diverticulite aguda.'},
+    {t:'Linfonodo Abdominal', v:'Linfonodo(s) de aspecto reativo na cadeia ___. O maior mede ___mm. Correlacionar clinicamente.'},
+    {t:'Neoplasia Abdominal', v:'Massa sólida, heterogênea, medindo ___cm, localizada em ___. Suspeita de processo neoplásico. Correlacionar com tomografia e avaliação oncológica.'},
+    {t:'Hérnia Abdominal', v:'Identificada hérnia ___ com conteúdo ___. Colo medindo ___mm. Sem sinais de encarceramento ou estrangulamento.'},
+    {t:'Abscesso Abdominal', v:'Coleção líquida com debris e septações em ___, medindo ___cm, compatível com abscesso. Considerar drenagem guiada.'},
+    {t:'Lipoma Abdominal', v:'Imagem hiperecóica, bem delimitada, de aspecto homogêneo, medindo ___cm em ___, compatível com lipoma.'},
+    {t:'Bócio Difuso', v:'Tireoide de volume aumentado (___ml), ecotextura homogênea, sem nódulos individualizados, compatível com bócio difuso.'},
+    {t:'Linfoma Abdominal', v:'Múltiplos linfonodos aumentados de volume nas cadeias ___, o maior medindo ___cm, com aspecto hipoecóico e perda do hilo gorduroso. Correlacionar com avaliação hematológica.'},
+  ],
+  'Rins / Vias / Próstata': [
+    {t:'Rins Normais', v:'Rins de morfologia, contornos e dimensões normais. Rim direito medindo ___cm e rim esquerdo medindo ___cm. Diferenciação corticomedular preservada bilateralmente. Ausência de cálculos, dilatações pielocaliciais ou lesões focais.'},
+    {t:'Nefrolitíase', v:'Cálculo(s) no rim ___, localizado(s) em ___, medindo ___mm, com sombra acústica posterior. Sem dilatação pielocalicial.'},
+    {t:'Hidronefrose Leve', v:'Discreta dilatação do sistema pielocalicial do rim ___ (hidronefrose grau I). Investigar causa obstrutiva.'},
+    {t:'Hidronefrose Moderada', v:'Moderada dilatação do sistema pielocalicial do rim ___ (hidronefrose grau II/III), com adelgaçamento do parênquima renal. Investigar causa obstrutiva.'},
+    {t:'Cisto Renal Simples', v:'Imagem cística simples no rim ___, anecóica, de paredes finas e lisas, sem septos, medindo ___cm, compatível com cisto renal simples (Bosniak I).'},
+    {t:'Cisto Renal Complexo', v:'Imagem cística no rim ___, medindo ___cm, com ___ (septos/espessamento parietal/calcificações), classificada como Bosniak ___. Correlacionar com ressonância magnética.'},
+    {t:'Nódulo Renal', v:'Imagem nodular sólida no rim ___, medindo ___cm, no polo ___. Correlacionar com tomografia computadorizada.'},
+    {t:'Bexiga Normal', v:'Bexiga urinária de paredes finas e lisas, conteúdo anecóico, sem imagens intraluminais. Volume urinário estimado em ___ml.'},
+    {t:'Próstata Normal', v:'Próstata de dimensões normais, medindo ___x___x___cm, volume estimado em ___ml (VR até 25ml), ecotextura homogênea, contornos regulares.'},
+    {t:'Hiperplasia Prostática', v:'Próstata de dimensões aumentadas, medindo ___x___x___cm, volume estimado em ___ml, com predomínio de crescimento da zona de transição, compatível com hiperplasia benigna da próstata.'},
+    {t:'Nódulo Prostático', v:'Nódulo hipoecóico na zona periférica da próstata, medindo ___mm. Correlacionar com PSA e avaliação urológica.'},
+    {t:'Ureterolitíase', v:'Imagem hiperecóica com sombra acústica no ureter ___, medindo ___mm, com dilatação ureteral a montante. Compatível com ureterolitíase.'},
+    {t:'Pielonefrite', v:'Rim ___ com aumento de volume, ecotextura heterogênea e hipervascularização ao Doppler. Compatível com pielonefrite. Correlacionar clinicamente.'},
+    {t:'Rim Policístico', v:'Rins de dimensões aumentadas, com múltiplos cistos de variados tamanhos substituindo o parênquima renal bilateralmente, compatível com doença renal policística.'},
+    {t:'Cálculo Vesical', v:'Imagem hiperecóica com sombra acústica no interior da bexiga, medindo ___mm, compatível com cálculo vesical.'},
+    {t:'Espessamento Vesical', v:'Espessamento focal/difuso da parede vesical em ___. Correlacionar com cistoscopia.'},
+    {t:'Resíduo Pós-Miccional', v:'Resíduo pós-miccional aumentado, estimado em ___ml (VR até 50ml).'},
+    {t:'Angiomiolipoma Renal', v:'Imagem hiperecóica, bem delimitada, medindo ___cm no rim ___, compatível com angiomiolipoma renal. Correlacionar com tomografia.'},
+    {t:'Atrofia Renal', v:'Rim ___ de dimensões reduzidas, medindo ___cm, com adelgaçamento do parênquima e perda da diferenciação corticomedular, compatível com atrofia renal.'},
+    {t:'Rim em Ferradura', v:'Fusão dos polos inferiores dos rins, compatível com rim em ferradura.'},
+  ],
+  'Ginecologia / Obstetrícia': [
+    {t:'Útero Normal', v:'Útero em anteversão/retroversão, de dimensões normais, medindo ___x___x___cm, miométrio de ecotextura homogênea, endométrio de espessura normal medindo ___mm, compatível com fase ___.'},
+    {t:'Mioma Uterino', v:'Útero com imagem nodular hipoecoica, de contornos bem definidos, medindo ___cm, localizada em ___ (subseroso/intramural/submucoso), compatível com mioma uterino.'},
+    {t:'Ovário Normal', v:'Ovários de dimensões normais. Ovário direito medindo ___x___cm, ovário esquerdo medindo ___x___cm. Folículos fisiológicos presentes.'},
+    {t:'Cisto Folicular', v:'Imagem cística simples no ovário ___, anecóica, de paredes finas, sem septos, medindo ___cm. Compatível com cisto folicular/funcional. Controle em 6-8 semanas.'},
+    {t:'Endometrioma', v:'Imagem cística no ovário ___, com conteúdo homogêneo de baixa ecogenicidade (aspecto em vidro fosco), medindo ___cm, compatível com endometrioma.'},
+    {t:'Gestação 1T', v:'Gestação tópica, única, com embrião medindo ___mm (CCN), correspondendo a ___semanas e ___dias. Batimentos cardíacos fetais presentes e rítmicos, com frequência de ___bpm. Saco gestacional medindo ___mm.'},
+    {t:'Gestação Gemelar', v:'Gestação gemelar ___coriônica ___amniótica. Feto A: CCN ___mm, BCF ___bpm. Feto B: CCN ___mm, BCF ___bpm.'},
+    {t:'Aborto Retido', v:'Saco gestacional irregular, medindo ___mm, sem embrião identificado ou embrião sem atividade cardíaca, compatível com abortamento retido. Correlacionar com beta-hCG.'},
+    {t:'Gravidez Ectópica', v:'Útero vazio. Imagem heterogênea em ___, medindo ___cm, com líquido livre em Douglas. Suspeita de gravidez ectópica. Avaliação ginecológica urgente.'},
+    {t:'Endometrite', v:'Endométrio espessado e heterogêneo, medindo ___mm, com hipervascularização ao Doppler. Correlacionar clinicamente com possibilidade de endometrite.'},
+    {t:'DIU Tópico', v:'Dispositivo intrauterino (DIU) tópico, com haste superior a ___mm do fundo uterino.'},
+    {t:'Pólipo Endometrial', v:'Imagem hiperecóica intracavitária, medindo ___mm, com vascularização ao Doppler, compatível com pólipo endometrial. Correlacionar com histeroscopia.'},
+    {t:'SOP', v:'Ovários de volume aumentado (OD: ___ml, OE: ___ml), com múltiplos folículos periféricos medindo menos de 10mm (>12 folículos por ovário), compatível com síndrome dos ovários policísticos.'},
+    {t:'Torção Ovariana', v:'Ovário ___ aumentado de volume, heterogêneo, medindo ___cm, com ausência de fluxo ao Doppler. Suspeita de torção ovariana. Avaliação cirúrgica urgente.'},
+    {t:'Líquido em Douglas', v:'Pequena quantidade de líquido livre em fundo de saco de Douglas, podendo ser fisiológico no período periovulatório.'},
+    {t:'Morfológico 2T Normal', v:'Gestação única, tópica, com feto em apresentação ___. Biometria fetal: DBP ___mm, CC ___mm, CA ___mm, CF ___mm, correspondendo a ___semanas. Peso fetal estimado: ___g (percentil ___). BCF: ___bpm. Placenta ___ (grau ___), inserida em ___, a ___cm do OI do colo. ILA: ___cm. Morfologia fetal sem alterações detectáveis ao exame.'},
+    {t:'Placenta Prévia', v:'Placenta de inserção ___ (baixa/marginal/parcial/total), cobrindo o orifício interno do colo. Correlacionar clinicamente.'},
+    {t:'Oligoâmnio', v:'Índice de líquido amniótico reduzido, medindo ___cm (VR: 8-18cm), compatível com oligoâmnio.'},
+    {t:'Polidrâmnio', v:'Índice de líquido amniótico aumentado, medindo ___cm (VR: 8-18cm), compatível com polidrâmnio.'},
+  ],
+  'Cervical / Tireoide': [
+    {t:'Tireoide Normal', v:'Tireoide de dimensões normais, com volume total estimado em ___ml (VR: homens até 18ml, mulheres até 15ml). Ecotextura homogênea, ecogenicidade normal, contornos regulares. Ausência de nódulos.'},
+    {t:'Nódulo TI-RADS 2', v:'Nódulo ___ no lobo ___ da tireoide, medindo ___mm, com características benignas (TI-RADS 2). Controle em 1-2 anos conforme protocolo.'},
+    {t:'Nódulo TI-RADS 3', v:'Nódulo ___ no lobo ___ da tireoide, medindo ___mm (TI-RADS 3). Controle ultrassonográfico em 1 ano. PAAF se > 15mm.'},
+    {t:'Nódulo TI-RADS 4', v:'Nódulo ___ no lobo ___ da tireoide, medindo ___mm, com características suspeitas (TI-RADS 4). Indicada PAAF para avaliação citopatológica.'},
+    {t:'Nódulo TI-RADS 5', v:'Nódulo ___ no lobo ___ da tireoide, medindo ___mm, com características altamente suspeitas de malignidade (TI-RADS 5): ___ (microcalcificações/margens irregulares). Indicada PAAF urgente.'},
+    {t:'Hashimoto', v:'Tireoide de dimensões ___, com ecotextura heterogênea e ecogenicidade difusamente reduzida, com micronódulos e septos fibrosos, compatível com tireoidite de Hashimoto. Correlacionar com anticorpos antitireoidianos.'},
+    {t:'Bócio Multinodular', v:'Tireoide de volume aumentado (___ml), com múltiplos nódulos de variados tamanhos e ecogenicidades, compatível com bócio multinodular. O maior nódulo localiza-se em ___, medindo ___mm.'},
+    {t:'Linfonodo Cervical Reativo', v:'Linfonodo(s) de aspecto reativo na cadeia cervical ___, o maior medindo ___mm, com hilo gorduroso preservado.'},
+    {t:'Linfonodo Cervical Suspeito', v:'Linfonodo na cadeia cervical ___, medindo ___mm, com perda do hilo gorduroso e aspecto arredondado. Correlacionar clinicamente e considerar PAAF.'},
+    {t:'Parótida Normal', v:'Glândulas parótidas de dimensões e ecotextura normais, sem nódulos ou coleções.'},
+  ],
+  'Músculo-esquelético': [
+    {t:'Tendão Normal', v:'Tendão ___ de ecotextura fibrilar normal, espessura preservada, sem sinais de tendinose ou rotura.'},
+    {t:'Tendinose', v:'Tendão ___ com espessamento focal/difuso, perda da ecotextura fibrilar e ecogenicidade reduzida, compatível com tendinose.'},
+    {t:'Rotura Parcial', v:'Tendão ___ com solução de continuidade parcial em ___, medindo ___mm, compatível com rotura parcial.'},
+    {t:'Rotura Total', v:'Tendão ___ com solução de continuidade total, com retração das extremidades. Compatível com rotura total.'},
+    {t:'Bursite', v:'Coleção líquida na bursa ___, medindo ___ml, compatível com bursite.'},
+    {t:'Cisto Sinovial', v:'Imagem cística, de paredes finas, medindo ___cm, localizada em ___, compatível com cisto sinovial/ganglionar.'},
+    {t:'Derrame Articular', v:'Derrame articular na articulação ___, com volume estimado de ___ml.'},
+    {t:'Fascite Plantar', v:'Espessamento da fáscia plantar proximal medindo ___mm (VR até 4mm), com hipervascularização ao Doppler, compatível com fascite plantar.'},
+  ],
+  'Pênis / Testículo': [
+    {t:'Testículos Normais', v:'Testículos de dimensões, ecotextura e ecogenicidade normais. Testículo direito medindo ___x___x___cm, volume ___ml. Testículo esquerdo medindo ___x___x___cm, volume ___ml. Epidídimos de aspecto normal. Ausência de varicocele. Fluxo vascular normal ao Doppler.'},
+    {t:'Varicocele', v:'Plexo pampiniforme ___ com veias dilatadas medindo até ___mm, com refluxo ao Doppler durante manobra de Valsalva, compatível com varicocele grau ___.'},
+    {t:'Hidrocele', v:'Coleção líquida na bolsa escrotal ___, medindo ___ml, compatível com hidrocele.'},
+    {t:'Nódulo Testicular', v:'Imagem nodular ___ no testículo ___, medindo ___mm. Correlacionar com marcadores tumorais (AFP, beta-hCG, LDH) e avaliação urológica.'},
+    {t:'Orquite', v:'Testículo ___ aumentado de volume, com ecotextura heterogênea e hipervascularização ao Doppler, compatível com orquite. Correlacionar clinicamente.'},
+    {t:'Torção Testicular', v:'Testículo ___ aumentado de volume, com ausência de fluxo ao Doppler colorido e pulsado. Compatível com torção testicular. Avaliação cirúrgica urgente.'},
+    {t:'Pênis Normal', v:'Pênis de aspecto normal ao exame. Corpos cavernosos e esponjoso de ecotextura homogênea. Artérias cavernosas com fluxo normal ao Doppler.'},
+  ],
+  'Vascular': [
+    {t:'Doppler Venoso Normal', v:'Veias do sistema venoso profundo dos membros inferiores pérvias, compressíveis, com fluxo espontâneo e fásico, sem sinais de trombose venosa profunda.'},
+    {t:'TVP', v:'Veia ___ com trombo intraluminal, não compressível, com ausência de fluxo ao Doppler colorido, compatível com trombose venosa profunda.'},
+    {t:'Insuficiência Venosa', v:'Refluxo valvar patológico (> 0,5s) na veia ___, compatível com insuficiência venosa.'},
+    {t:'Aorta Normal', v:'Aorta abdominal de calibre normal, medindo ___cm em seu maior diâmetro, sem dilatações aneurismáticas.'},
+    {t:'Aneurisma Aorta', v:'Aorta abdominal com dilatação aneurismática medindo ___cm em seu maior diâmetro. Correlacionar com tomografia para planejamento cirúrgico.'},
+    {t:'Doppler Carotídeo Normal', v:'Artérias carótidas comuns, internas e externas sem placas ateroscleróticas ou estenoses significativas. Espessura íntima-média dentro dos limites normais.'},
+    {t:'Placa Aterosclerótica', v:'Placa aterosclerótica ___ na artéria carótida ___, medindo ___mm, causando estenose estimada em ___%.' },
+  ],
+  'Dermatológico': [
+    {t:'Cisto Epidérmico', v:'Imagem nodular ___, de contornos bem definidos, medindo ___mm, localizada em ___, compatível com cisto epidérmico/sebáceo.'},
+    {t:'Lipoma', v:'Imagem hiperecóica, bem delimitada, de aspecto homogêneo, medindo ___cm em ___, compatível com lipoma.'},
+    {t:'Abscesso Cutâneo', v:'Coleção líquida com debris, de paredes espessadas, medindo ___cm em ___, compatível com abscesso. Hipervascularização periférica ao Doppler.'},
+    {t:'Nódulo Suspeito', v:'Imagem nodular ___, de contornos ___, medindo ___mm em ___, com ___ ao Doppler. Correlacionar clinicamente e considerar biópsia.'},
+    {t:'Corpo Estranho', v:'Imagem hiperecóica com sombra acústica posterior em ___, compatível com corpo estranho.'},
+    {t:'Hematoma', v:'Coleção heterogênea em ___, medindo ___cm, compatível com hematoma em fase de ___.'},
+    {t:'Fístula', v:'Trajeto fistuloso identificado em ___, com comunicação entre ___.'},
+    {t:'Linfonodo Superficial', v:'Linfonodo superficial em ___, medindo ___mm, com ___ (hilo gorduroso preservado/ausente). Aspecto ___ (reativo/suspeito).'},
+  ],
+};
+
+// ═══════════════════════════════════════════════
+// THEME
+// ═══════════════════════════════════════════════
+function toggleTheme() {
+  const html = document.documentElement;
+  const current = html.getAttribute('data-theme');
+  const next = current === 'dark' ? 'light' : 'dark';
+  html.setAttribute('data-theme', next);
+  localStorage.setItem('puf_theme', next);
+}
+
+// ═══════════════════════════════════════════════
+// VOICE
+// ═══════════════════════════════════════════════
+function initVoice() {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) {
+    document.getElementById('voiceStatus').textContent = '⚠ Use Chrome para reconhecimento de voz';
+    document.getElementById('voiceBtn').disabled = true;
+    return;
+  }
+  recognition = new SR();
+  recognition.lang = 'pt-BR';
+  recognition.continuous = true;
+  recognition.interimResults = true;
+
+  recognition.onstart = () => {
+    isRecording = true;
+    document.getElementById('voiceBtn').classList.add('recording');
+    document.getElementById('voiceBtn').textContent = '⏹';
+    document.getElementById('voiceCockpit').classList.add('recording');
+    document.getElementById('voiceStatus').textContent = '🔴 Gravando — fale os achados';
+    document.getElementById('voiceStatus').classList.add('active');
+    document.getElementById('voiceWaveform').classList.add('visible');
+  };
+
+  recognition.onresult = (e) => {
+    let interim = '', final = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) final += e.results[i][0].transcript + ' ';
+      else interim += e.results[i][0].transcript;
+    }
+    voiceTranscript += final;
+    const el = document.getElementById('voiceTranscript');
+    el.textContent = voiceTranscript + interim;
+    el.classList.add('visible');
+  };
+
+  recognition.onerror = (e) => {
+    toast('Erro de voz: ' + e.error, 'error');
+    stopVoice();
+  };
+
+  recognition.onend = () => { if (isRecording) recognition.start(); };
+}
+
+function toggleVoice() {
+  if (!recognition) initVoice();
+  if (!recognition) return;
+  isRecording ? stopVoice() : startVoice();
+}
+
+function startVoice() {
+  voiceTranscript = '';
+  document.getElementById('voiceTranscript').textContent = '';
+  recognition.start();
+}
+
+function stopVoice() {
+  isRecording = false;
+  recognition.stop();
+  const btn = document.getElementById('voiceBtn');
+  btn.classList.remove('recording');
+  btn.textContent = '🎙';
+  document.getElementById('voiceCockpit').classList.remove('recording');
+  document.getElementById('voiceStatus').textContent = '✅ Pronto — clique em "Gerar Laudo com IA"';
+  document.getElementById('voiceStatus').classList.remove('active');
+  document.getElementById('voiceWaveform').classList.remove('visible');
+}
+
+function limparVoz() {
+  voiceTranscript = '';
+  const el = document.getElementById('voiceTranscript');
+  el.textContent = '';
+  el.classList.remove('visible');
+  document.getElementById('voiceStatus').textContent = 'Pressione e fale os achados';
+  document.getElementById('voiceStatus').classList.remove('active');
+  if (isRecording) stopVoice();
+}
+
+// ═══════════════════════════════════════════════
+// OCR
+// ═══════════════════════════════════════════════
+async function handleOCR(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const apiKey = getApiKey();
+  if (!apiKey) { openApiModal(); return; }
+
+  showLoading('Lendo pedido com OCR...', 'Gemini Vision está analisando a imagem');
+
+  const thumb = document.getElementById('ocrThumb');
+  thumb.src = URL.createObjectURL(file);
+
+  try {
+    const base64 = await fileToBase64(file);
+    const body = {
+      contents: [{
+        parts: [
+          { text: 'Analise esta imagem de um pedido médico. Extraia em JSON:\n{"nome":"Nome completo do paciente","idade":"Número da idade","tipoExame":"Tipo de exame solicitado","indicacao":"Indicação clínica"}\nResponda APENAS com o JSON.' },
+          { inline_data: { mime_type: file.type, data: base64 } }
+        ]
+      }]
+    };
+    const res = await fetch(GEMINI_URL + '?key=' + apiKey, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (!data.candidates) throw new Error(data.error?.message || 'Erro na API');
+    const text = data.candidates[0].content.parts[0].text.trim();
+    const match = text.match(/\{[\s\S]*\}/);
+    if (match) {
+      const info = JSON.parse(match[0]);
+      if (info.nome) document.getElementById('nomePaciente').value = info.nome;
+      if (info.idade) document.getElementById('idade').value = info.idade;
+      if (info.tipoExame) document.getElementById('tipoExame').value = info.tipoExame;
+
+      const ocrData = document.getElementById('ocrData');
+      ocrData.innerHTML = [
+        info.nome ? `<div class="ocr-data-row"><strong>Paciente:</strong> ${info.nome}</div>` : '',
+        info.idade ? `<div class="ocr-data-row"><strong>Idade:</strong> ${info.idade} anos</div>` : '',
+        info.tipoExame ? `<div class="ocr-data-row"><strong>Exame:</strong> ${info.tipoExame}</div>` : '',
+        info.indicacao ? `<div class="ocr-data-row"><strong>Indicação:</strong> ${info.indicacao}</div>` : '',
+      ].join('');
+
+      const result = document.getElementById('ocrResult');
+      result.classList.add('visible');
+      toast('✅ Dados extraídos do pedido!', 'success');
+    }
+  } catch (err) {
+    toast('Erro no OCR: ' + err.message, 'error');
+  } finally {
+    hideLoading();
+  }
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const r = new FileReader();
+    r.onload = () => resolve(r.result.split(',')[1]);
+    r.onerror = reject;
+    r.readAsDataURL(file);
+  });
+}
+
+// ═══════════════════════════════════════════════
+// GERAR LAUDO
+// ═══════════════════════════════════════════════
+async function gerarLaudo() {
+  const apiKey = getApiKey();
+  if (!apiKey) { openApiModal(); return; }
+
+  const descricao = voiceTranscript || document.getElementById('voiceTranscript').textContent;
+  if (!descricao.trim()) { toast('Grave sua descrição por voz primeiro!', 'error'); return; }
+
+  const nome = document.getElementById('nomePaciente').value;
+  const idade = document.getElementById('idade').value;
+  const tipo = document.getElementById('tipoExame').value || 'ultrassonografia';
+
+  showLoading('Gerando laudo com Gemini...', 'Processando achados e criando laudo técnico');
+
+  const prompt = `Você é um radiologista especialista em ultrassonografia. Gere um laudo técnico profissional completo em português brasileiro.
+
+Dados:
+- Exame: ${tipo}${nome ? '\n- Paciente: ' + nome : ''}${idade ? '\n- Idade: ' + idade + ' anos' : ''}
+
+Descrição dos achados (ditado pelo médico):
+"${descricao}"
+
+Gere o laudo com:
+1. ACHADOS: Descrição técnica detalhada. Complete com valores normais para órgãos não mencionados.
+2. CONCLUSÃO: Impressão diagnóstica objetiva e concisa.
+
+Formato exato:
+ACHADOS:
+[texto]
+
+CONCLUSÃO:
+[texto]`;
+
+  try {
+    const res = await fetch(GEMINI_URL + '?key=' + apiKey, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+    });
+    const data = await res.json();
+    if (!data.candidates) throw new Error(data.error?.message || 'Erro na API');
+
+    const laudoTexto = data.candidates[0].content.parts[0].text;
+    currentLaudoText = laudoTexto;
+
+    const achadosMatch = laudoTexto.match(/ACHADOS[:\s]*([\s\S]*?)(?=CONCLUS[ÃA]O|$)/i);
+    const conclusaoMatch = laudoTexto.match(/CONCLUS[ÃA]O[:\s]*([\s\S]*?)$/i);
+
+    if (achadosMatch) document.getElementById('achados').value = achadosMatch[1].trim();
+    if (conclusaoMatch) document.getElementById('conclusao').value = conclusaoMatch[1].trim();
+
+    document.getElementById('laudoBox').textContent = laudoTexto;
+    document.getElementById('laudoOutput').classList.add('visible');
+    document.getElementById('laudoOutput').scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    toast('✅ Laudo gerado!', 'success');
+  } catch (err) {
+    toast('Erro ao gerar laudo: ' + err.message, 'error');
+  } finally {
+    hideLoading();
+  }
+}
+
+// ═══════════════════════════════════════════════
+// SNIPPETS
+// ═══════════════════════════════════════════════
+function renderSnippets(filter = '') {
+  const container = document.getElementById('snippetsList');
+  container.innerHTML = '';
+  const f = filter.toLowerCase();
+
+  Object.entries(SNIPPETS).forEach(([cat, items]) => {
+    const filtered = f ? items.filter(s => s.t.toLowerCase().includes(f)) : items;
+    if (!filtered.length) return;
+
+    const catDiv = document.createElement('div');
+    catDiv.className = 'snippet-category';
+    catDiv.innerHTML = `<div class="snippet-cat-label">${cat}</div><div class="chips" id="chips-${cat.replace(/\W/g,'_')}"></div>`;
+    container.appendChild(catDiv);
+
+    const chips = catDiv.querySelector('.chips');
+    filtered.forEach(s => {
+      const chip = document.createElement('button');
+      chip.className = 'chip';
+      chip.textContent = s.t;
+      chip.onclick = () => {
+        const field = document.getElementById('achados');
+        field.value += (field.value ? '\n\n' : '') + s.v;
+        toast('Snippet inserido!', 'success');
+        // mobile: fechar painel e voltar ao laudo
+        if (window.innerWidth <= 900) mobileNav('laudo', document.getElementById('nav-laudo'));
+      };
+      chips.appendChild(chip);
+    });
+  });
+}
+
+function filtrarSnippets(val) { renderSnippets(val); }
+
+// ═══════════════════════════════════════════════
+// SALVAR / HISTÓRICO
+// ═══════════════════════════════════════════════
+function salvarLaudo() {
+  const nome = document.getElementById('nomePaciente').value;
+  const achados = document.getElementById('achados').value;
+  if (!nome || !achados) { toast('Preencha nome e achados!', 'error'); return; }
+
+  const laudo = {
+    id: Date.now(),
+    nome,
+    idade: document.getElementById('idade').value,
+    tipoExame: document.getElementById('tipoExame').value,
+    achados,
+    conclusao: document.getElementById('conclusao').value,
+    data: new Date().toLocaleString('pt-BR')
+  };
+
+  const laudos = JSON.parse(localStorage.getItem('puf_laudos') || '[]');
+  laudos.unshift(laudo);
+  localStorage.setItem('puf_laudos', JSON.stringify(laudos.slice(0, 100)));
+  toast('✅ Laudo salvo!', 'success');
+  renderHistorico();
+}
+
+function renderHistorico() {
+  const laudos = JSON.parse(localStorage.getItem('puf_laudos') || '[]');
+  const container = document.getElementById('historicoList');
+  container.innerHTML = '';
+
+  if (!laudos.length) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">📂</div><div class="empty-state-text">Nenhum laudo salvo ainda</div></div>`;
+    return;
+  }
+
+  laudos.forEach(l => {
+    const div = document.createElement('div');
+    div.className = 'history-item';
+    div.innerHTML = `<div class="history-name">${l.nome}</div><div class="history-meta">${l.tipoExame || '—'} · ${l.data}</div>`;
+    div.onclick = () => {
+      document.getElementById('nomePaciente').value = l.nome;
+      document.getElementById('idade').value = l.idade || '';
+      document.getElementById('tipoExame').value = l.tipoExame || '';
+      document.getElementById('achados').value = l.achados;
+      document.getElementById('conclusao').value = l.conclusao || '';
+      document.getElementById('laudoOutput').classList.add('visible');
+      toast('Laudo carregado!', 'info');
+      if (window.innerWidth <= 900) mobileNav('laudo', document.getElementById('nav-laudo'));
+    };
+    container.appendChild(div);
+  });
+}
+
+function novoLaudo() {
+  ['nomePaciente','idade','tipoExame','achados','conclusao'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('voiceTranscript').textContent = '';
+  document.getElementById('voiceTranscript').classList.remove('visible');
+  document.getElementById('laudoOutput').classList.remove('visible');
+  document.getElementById('voiceStatus').textContent = 'Pressione e fale os achados';
+  document.getElementById('ocrResult').classList.remove('visible');
+  voiceTranscript = '';
+  currentLaudoText = '';
+  if (isRecording) stopVoice();
+  toast('Novo laudo!', 'info');
+}
+
+function imprimirLaudo() {
+  const nome = document.getElementById('nomePaciente').value || '—';
+  const idade = document.getElementById('idade').value;
+  const tipo = document.getElementById('tipoExame').value || '—';
+  const achados = document.getElementById('achados').value || '—';
+  const conclusao = document.getElementById('conclusao').value || '—';
+  const data = new Date().toLocaleDateString('pt-BR');
+
+  const win = window.open('', '_blank');
+  win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Laudo — ${nome}</title>
+<style>
+  body{font-family:'Georgia',serif;max-width:720px;margin:48px auto;padding:0 32px;color:#1a1a2e;line-height:1.7}
+  .logo{text-align:center;margin-bottom:32px;padding-bottom:16px;border-bottom:2px solid #6366f1}
+  .logo h1{font-size:22px;color:#6366f1;letter-spacing:-0.02em;margin:0}
+  .logo p{font-size:12px;color:#888;margin:4px 0 0}
+  .meta{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:28px;padding:16px;background:#f8f9ff;border-radius:8px;border:1px solid #e8eaf6}
+  .meta-item{font-size:13px}.meta-item strong{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#888;margin-bottom:2px}
+  .section{margin-bottom:24px}
+  .section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#6366f1;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid #e8eaf6}
+  .section-content{font-size:14px;white-space:pre-wrap}
+  .footer{text-align:center;font-size:11px;color:#aaa;margin-top:48px;padding-top:16px;border-top:1px solid #eee}
+  @media print{body{margin:0}}
+</style></head><body>
+<div class="logo"><h1>✦ Pegasus Ultra-Flow</h1><p>Sistema de Laudos Inteligentes</p></div>
+<div class="meta">
+  <div class="meta-item"><strong>Paciente</strong>${nome}</div>
+  <div class="meta-item"><strong>Idade</strong>${idade ? idade + ' anos' : '—'}</div>
+  <div class="meta-item"><strong>Exame</strong>${tipo}</div>
+  <div class="meta-item"><strong>Data</strong>${data}</div>
+</div>
+<div class="section"><div class="section-title">Achados Ultrassonográficos</div><div class="section-content">${achados}</div></div>
+<div class="section"><div class="section-title">Conclusão</div><div class="section-content">${conclusao}</div></div>
+<div class="footer">Gerado por Pegasus Ultra-Flow · ${new Date().toLocaleString('pt-BR')}</div>
+<script>window.onload=()=>{window.print();}<\/script></body></html>`);
+  win.document.close();
+}
+
+function copiarLaudo() {
+  const text = document.getElementById('laudoBox').textContent;
+  navigator.clipboard.writeText(text).then(() => toast('Copiado!', 'success'));
+}
+
+// ═══════════════════════════════════════════════
+// TABS
+// ═══════════════════════════════════════════════
+function switchRightTab(name, btn) {
+  document.querySelectorAll('.right-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.right-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ═══════════════════════════════════════════════
+// MOBILE NAV
+// ═══════════════════════════════════════════════
+function mobileNav(view, btn) {
+  document.querySelectorAll('.bottom-nav-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  const colRight = document.getElementById('colRight');
+  const colLeft = document.getElementById('colLeft');
+
+  if (view === 'laudo') {
+    colRight.classList.remove('mobile-visible');
+    colLeft.style.display = '';
+  } else {
+    colRight.classList.add('mobile-visible');
+    colLeft.style.display = 'none';
+    if (view === 'snippets') switchRightTab('snippets', document.querySelector('.right-tab'));
+    if (view === 'historico') switchRightTab('historico', document.querySelectorAll('.right-tab')[1]);
+  }
+}
+
+// ═══════════════════════════════════════════════
+// API KEY MODAL
+// ═══════════════════════════════════════════════
+function openApiModal() {
+  document.getElementById('apiKeyInput').value = getApiKey();
+  document.getElementById('apiModal').classList.add('open');
+}
+function closeApiModal() { document.getElementById('apiModal').classList.remove('open'); }
+function salvarApiKey() {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  if (!key) { toast('Digite uma chave válida!', 'error'); return; }
+  localStorage.setItem('puf_api_key', key);
+  closeApiModal();
+  toast('✅ Chave salva com sucesso!', 'success');
+}
+document.getElementById('apiModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('apiModal')) closeApiModal();
+});
+
+// ═══════════════════════════════════════════════
+// LOADING
+// ═══════════════════════════════════════════════
+function showLoading(text, sub) {
+  document.getElementById('loadingText').textContent = text || 'Processando...';
+  document.getElementById('loadingSub').textContent = sub || '';
+  document.getElementById('loadingOverlay').classList.add('open');
+}
+function hideLoading() { document.getElementById('loadingOverlay').classList.remove('open'); }
+
+// ═══════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════
+function toast(msg, type = '') {
+  const container = document.getElementById('toastContainer');
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.textContent = msg;
+  container.appendChild(el);
+  requestAnimationFrame(() => { requestAnimationFrame(() => el.classList.add('show')); });
+  setTimeout(() => {
+    el.classList.remove('show');
+    setTimeout(() => el.remove(), 400);
+  }, 2800);
+}
+
+// ═══════════════════════════════════════════════
+// DRAG & DROP OCR
+// ═══════════════════════════════════════════════
+const ocrZone = document.getElementById('ocrZone');
+ocrZone.addEventListener('dragover', e => { e.preventDefault(); ocrZone.classList.add('drag-over'); });
+ocrZone.addEventListener('dragleave', () => ocrZone.classList.remove('drag-over'));
+ocrZone.addEventListener('drop', e => {
+  e.preventDefault();
+  ocrZone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file?.type.startsWith('image/')) {
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    document.getElementById('ocrInput').files = dt.files;
+    handleOCR({ target: { files: [file] } });
+  }
+});
+
+// ═══════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  // Restaurar tema
+  const savedTheme = localStorage.getItem('puf_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+
+  initVoice();
+  renderSnippets();
+  renderHistorico();
+
+  // Mostrar modal se não tiver chave
+  if (!getApiKey()) setTimeout(openApiModal, 900);
+});
+</script>
+</body>
+</html>
