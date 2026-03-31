@@ -1102,7 +1102,7 @@ textarea { resize: vertical; min-height: 100px; line-height: 1.65; font-size: 13
           <input type="file" id="ocrInput" accept="image/*" capture="environment" onchange="handleOCR(event)">
           <div class="ocr-icon-wrap">📷</div>
           <div class="ocr-title">Fotografe ou arraste o pedido</div>
-          <div class="ocr-sub">O <strong>Gemini Vision</strong> extrai os dados automaticamente</div>
+          <div class="ocr-sub">O <strong>Gemini 1.5 Flash</strong> extrai os dados automaticamente</div>
         </div>
         <div class="ocr-result" id="ocrResult">
           <img id="ocrThumb" class="ocr-thumb" alt="">
@@ -1267,7 +1267,8 @@ textarea { resize: vertical; min-height: 100px; line-height: 1.65; font-size: 13
 // ═══════════════════════════════════════════════
 // CONFIG & STATE
 // ═══════════════════════════════════════════════
-const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+const GEMINI_URL     = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+const GEMINI_OCR_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
 let recognition = null;
 let isRecording = false;
 let voiceTranscript = '';
@@ -1508,7 +1509,7 @@ async function handleOCR(event) {
   const apiKey = getApiKey();
   if (!apiKey) { openApiModal(); return; }
 
-  showLoading('Lendo pedido com OCR...', 'Gemini Vision está analisando a imagem');
+  showLoading('Lendo pedido com OCR...', 'Gemini 1.5 Flash está analisando a imagem');
 
   const thumb = document.getElementById('ocrThumb');
   thumb.src = URL.createObjectURL(file);
@@ -1518,35 +1519,36 @@ async function handleOCR(event) {
     const body = {
       contents: [{
         parts: [
-          { text: 'Analise esta imagem de um pedido médico. Extraia em JSON:\n{"nome":"Nome completo do paciente","idade":"Número da idade","tipoExame":"Tipo de exame solicitado","indicacao":"Indicação clínica"}\nResponda APENAS com o JSON.' },
+          { text: 'Você é um assistente médico especializado em leitura de pedidos de exame. Analise esta imagem de um pedido médico e extraia as informações do paciente.\n\nRetorne SOMENTE um JSON válido, sem texto adicional, no formato:\n{"nome":"Nome completo do paciente","idade":"Apenas o número (ex: 45)","tipoExame":"Tipo de exame solicitado (ex: USG Abdome Total)","indicacao":"Indicação clínica ou hipótese diagnóstica","medico":"Nome do médico solicitante se visível","crm":"CRM do médico se visível"}\n\nSe algum campo não estiver visível na imagem, use string vazia "".' },
           { inline_data: { mime_type: file.type, data: base64 } }
         ]
       }]
     };
-    const res = await fetch(GEMINI_URL + '?key=' + apiKey, {
+    const res = await fetch(GEMINI_OCR_URL + '?key=' + apiKey, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
     });
     const data = await res.json();
-    if (!data.candidates) throw new Error(data.error?.message || 'Erro na API');
+    if (!data.candidates) throw new Error(data.error?.message || 'Erro na API Gemini 1.5 Flash');
     const text = data.candidates[0].content.parts[0].text.trim();
     const match = text.match(/\{[\s\S]*\}/);
     if (match) {
       const info = JSON.parse(match[0]);
-      if (info.nome) document.getElementById('nomePaciente').value = info.nome;
-      if (info.idade) document.getElementById('idade').value = info.idade;
+      if (info.nome)      document.getElementById('nomePaciente').value = info.nome;
+      if (info.idade)     document.getElementById('idade').value = info.idade;
       if (info.tipoExame) document.getElementById('tipoExame').value = info.tipoExame;
 
       const ocrData = document.getElementById('ocrData');
       ocrData.innerHTML = [
-        info.nome ? `<div class="ocr-data-row"><strong>Paciente:</strong> ${info.nome}</div>` : '',
-        info.idade ? `<div class="ocr-data-row"><strong>Idade:</strong> ${info.idade} anos</div>` : '',
+        info.nome      ? `<div class="ocr-data-row"><strong>Paciente:</strong> ${info.nome}</div>` : '',
+        info.idade     ? `<div class="ocr-data-row"><strong>Idade:</strong> ${info.idade} anos</div>` : '',
         info.tipoExame ? `<div class="ocr-data-row"><strong>Exame:</strong> ${info.tipoExame}</div>` : '',
         info.indicacao ? `<div class="ocr-data-row"><strong>Indicação:</strong> ${info.indicacao}</div>` : '',
+        info.medico    ? `<div class="ocr-data-row"><strong>Médico:</strong> ${info.medico}${info.crm ? ' — CRM ' + info.crm : ''}</div>` : '',
       ].join('');
 
       const result = document.getElementById('ocrResult');
       result.classList.add('visible');
-      toast('✅ Dados extraídos do pedido!', 'success');
+      toast('✅ Dados extraídos com Gemini 1.5 Flash!', 'success');
     }
   } catch (err) {
     toast('Erro no OCR: ' + err.message, 'error');
