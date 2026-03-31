@@ -559,6 +559,132 @@ body {
 }
 
 /* ═══════════════════════════════════════════════
+   EDITOR DE IMAGENS
+═══════════════════════════════════════════════ */
+.image-editor {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 900px;
+  background: rgba(0, 0, 0, 0.8);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.editor-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.9);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.editor-btn {
+  background: rgba(100, 200, 255, 0.8);
+  border: 1px solid rgba(100, 200, 255, 0.5);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  white-space: nowrap;
+}
+
+.editor-btn:hover {
+  background: rgba(100, 200, 255, 1);
+  transform: scale(1.05);
+}
+
+.editor-btn.active {
+  background: rgba(255, 215, 0, 0.9);
+  border-color: rgba(255, 215, 0, 1);
+  color: #000;
+}
+
+.editor-btn.btn-save {
+  background: rgba(76, 175, 80, 0.8);
+  border-color: rgba(76, 175, 80, 1);
+}
+
+.editor-btn.btn-save:hover {
+  background: rgba(76, 175, 80, 1);
+}
+
+.editor-separator {
+  width: 1px;
+  height: 24px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.editor-color {
+  width: 40px;
+  height: 32px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.editor-size {
+  width: 80px;
+  height: 6px;
+  cursor: pointer;
+}
+
+.editor-canvas-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.5);
+  min-height: 400px;
+}
+
+#annotationCanvas {
+  max-width: 100%;
+  max-height: 70vh;
+  border-radius: 8px;
+  cursor: crosshair;
+  display: block;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.text-input-box {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.9);
+  border: 2px solid var(--accent);
+  border-radius: 6px;
+  padding: 8px;
+  z-index: 10001;
+}
+
+.text-input-box input {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--accent);
+  color: white;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-family: 'Courier New', monospace;
+  min-width: 200px;
+}
+
+.text-input-box input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.text-input-box input:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(100, 200, 255, 1);
+}
+
+/* ═══════════════════════════════════════════════
    OCR ZONE
 ═══════════════════════════════════════════════ */
 .ocr-zone {
@@ -1457,7 +1583,32 @@ textarea { resize: vertical; min-height: 100px; line-height: 1.65; font-size: 13
           <div class="gallery-lightbox" id="galleryLightbox">
             <div class="lightbox-content">
               <button class="lightbox-close" onclick="closeLightbox()">✕</button>
-              <img id="lightboxImage" alt="">
+              
+              <!-- EDITOR DE IMAGENS -->
+              <div class="image-editor" id="imageEditor">
+                <div class="editor-toolbar">
+                  <button class="editor-btn" onclick="toggleAnnotationMode('text')" title="Adicionar texto">📝 Texto</button>
+                  <button class="editor-btn" onclick="toggleAnnotationMode('arrow')" title="Desenhar seta">➜ Seta</button>
+                  <button class="editor-btn" onclick="toggleAnnotationMode('circle')" title="Desenhar círculo">⭕ Círculo</button>
+                  <button class="editor-btn" onclick="toggleAnnotationMode('line')" title="Desenhar linha">─ Linha</button>
+                  <div class="editor-separator"></div>
+                  <input type="color" id="annotationColor" value="#FFD700" title="Cor da anotação" class="editor-color">
+                  <input type="range" id="annotationSize" min="1" max="10" value="3" title="Tamanho" class="editor-size">
+                  <div class="editor-separator"></div>
+                  <button class="editor-btn" onclick="undoAnnotation()" title="Desfazer">↶ Desfazer</button>
+                  <button class="editor-btn" onclick="redoAnnotation()" title="Refazer">↷ Refazer</button>
+                  <button class="editor-btn" onclick="clearAnnotations()" title="Limpar tudo">🗑 Limpar</button>
+                  <button class="editor-btn btn-save" onclick="saveAnnotatedImage()" title="Salvar anotações">✓ Salvar</button>
+                </div>
+                <div class="editor-canvas-wrapper">
+                  <canvas id="annotationCanvas"></canvas>
+                  <div class="text-input-box" id="textInputBox" style="display:none;">
+                    <input type="text" id="textInput" placeholder="Digite o texto..." onkeypress="handleTextInput(event)">
+                  </div>
+                </div>
+              </div>
+              
+              <img id="lightboxImage" alt="" style="display:none;">
               <div class="lightbox-nav">
                 <button class="lightbox-btn" onclick="prevPhoto()">❮</button>
                 <span class="lightbox-counter" id="lightboxCounter"></span>
@@ -1641,6 +1792,14 @@ function openLightbox(index) {
   const photo = galleryPhotos[index];
   document.getElementById('lightboxImage').src = photo.src;
   document.getElementById('lightboxCounter').textContent = `${index + 1}/${galleryPhotos.length}`;
+  
+  // Inicializar editor de imagens
+  originalImage = new Image();
+  originalImage.onload = () => {
+    initializeAnnotationCanvas();
+  };
+  originalImage.src = photo.src;
+  
   document.getElementById('galleryLightbox').classList.add('visible');
 }
 
@@ -1674,7 +1833,257 @@ if (uploadZone) {
 }
 
 // ═══════════════════════════════════════════════
-// Limpar galeria ao criar novo laudo
+// EDITOR DE IMAGENS COM ANOTAÇÕES
+═══════════════════════════════════════════════
+let annotationMode = null;
+let isDrawing = false;
+let startX, startY;
+let annotationHistory = [];
+let historyIndex = -1;
+let canvas, ctx;
+let originalImage = null;
+
+function initializeAnnotationCanvas() {
+  canvas = document.getElementById('annotationCanvas');
+  ctx = canvas.getContext('2d');
+  
+  if (!originalImage) return;
+  
+  // Dimensionar canvas conforme a imagem
+  canvas.width = originalImage.width;
+  canvas.height = originalImage.height;
+  
+  // Desenhar imagem original
+  ctx.drawImage(originalImage, 0, 0);
+  saveAnnotationState();
+  
+  // Event listeners
+  canvas.addEventListener('mousedown', startDrawing);
+  canvas.addEventListener('mousemove', draw);
+  canvas.addEventListener('mouseup', stopDrawing);
+  canvas.addEventListener('mouseout', stopDrawing);
+  
+  // Touch events para mobile
+  canvas.addEventListener('touchstart', handleTouchStart);
+  canvas.addEventListener('touchmove', handleTouchMove);
+  canvas.addEventListener('touchend', stopDrawing);
+}
+
+function toggleAnnotationMode(mode) {
+  const buttons = document.querySelectorAll('.editor-btn');
+  buttons.forEach(btn => btn.classList.remove('active'));
+  
+  if (annotationMode === mode) {
+    annotationMode = null;
+  } else {
+    annotationMode = mode;
+    event.target.classList.add('active');
+    
+    if (mode === 'text') {
+      canvas.style.cursor = 'text';
+    } else {
+      canvas.style.cursor = 'crosshair';
+    }
+  }
+}
+
+function startDrawing(e) {
+  if (!annotationMode) return;
+  
+  isDrawing = true;
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  
+  startX = (e.clientX - rect.left) * scaleX;
+  startY = (e.clientY - rect.top) * scaleY;
+  
+  if (annotationMode === 'text') {
+    showTextInput(startX, startY);
+    isDrawing = false;
+  }
+}
+
+function draw(e) {
+  if (!isDrawing || !annotationMode || annotationMode === 'text') return;
+  
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  
+  const currentX = (e.clientX - rect.left) * scaleX;
+  const currentY = (e.clientY - rect.top) * scaleY;
+  
+  // Restaurar estado anterior
+  redrawCanvas();
+  
+  const color = document.getElementById('annotationColor').value;
+  const size = document.getElementById('annotationSize').value;
+  
+  ctx.strokeStyle = color;
+  ctx.lineWidth = size;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  ctx.fillStyle = color;
+  
+  if (annotationMode === 'line') {
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+    ctx.lineTo(currentX, currentY);
+    ctx.stroke();
+  } else if (annotationMode === 'arrow') {
+    drawArrow(startX, startY, currentX, currentY, color, size);
+  } else if (annotationMode === 'circle') {
+    const radius = Math.sqrt(Math.pow(currentX - startX, 2) + Math.pow(currentY - startY, 2));
+    ctx.beginPath();
+    ctx.arc(startX, startY, radius, 0, 2 * Math.PI);
+    ctx.stroke();
+  }
+}
+
+function stopDrawing() {
+  if (isDrawing) {
+    saveAnnotationState();
+    isDrawing = false;
+    annotationMode = null;
+    document.querySelectorAll('.editor-btn').forEach(btn => btn.classList.remove('active'));
+    canvas.style.cursor = 'crosshair';
+  }
+}
+
+function drawArrow(fromX, fromY, toX, toY, color, size) {
+  const headlen = 15;
+  const angle = Math.atan2(toY - fromY, toX - fromX);
+  
+  ctx.strokeStyle = color;
+  ctx.lineWidth = size;
+  ctx.beginPath();
+  ctx.moveTo(fromX, fromY);
+  ctx.lineTo(toX, toY);
+  ctx.stroke();
+  
+  ctx.beginPath();
+  ctx.moveTo(toX, toY);
+  ctx.lineTo(toX - headlen * Math.cos(angle - Math.PI / 6), toY - headlen * Math.sin(angle - Math.PI / 6));
+  ctx.moveTo(toX, toY);
+  ctx.lineTo(toX - headlen * Math.cos(angle + Math.PI / 6), toY - headlen * Math.sin(angle + Math.PI / 6));
+  ctx.stroke();
+}
+
+function showTextInput(x, y) {
+  const textBox = document.getElementById('textInputBox');
+  const textInput = document.getElementById('textInput');
+  
+  textBox.style.left = x + 'px';
+  textBox.style.top = y + 'px';
+  textBox.style.display = 'block';
+  textInput.value = '';
+  textInput.focus();
+}
+
+function handleTextInput(event) {
+  if (event.key === 'Enter') {
+    const text = document.getElementById('textInput').value;
+    const textBox = document.getElementById('textInputBox');
+    const x = parseInt(textBox.style.left);
+    const y = parseInt(textBox.style.top);
+    
+    if (text.trim()) {
+      const color = document.getElementById('annotationColor').value;
+      const size = document.getElementById('annotationSize').value * 4;
+      
+      ctx.fillStyle = color;
+      ctx.font = `bold ${size}px Arial`;
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 3;
+      ctx.strokeText(text, x, y);
+      ctx.fillText(text, x, y);
+      
+      saveAnnotationState();
+    }
+    
+    textBox.style.display = 'none';
+  }
+}
+
+function handleTouchStart(e) {
+  e.preventDefault();
+  const touch = e.touches[0];
+  const mouseEvent = new MouseEvent('mousedown', {
+    clientX: touch.clientX,
+    clientY: touch.clientY
+  });
+  canvas.dispatchEvent(mouseEvent);
+}
+
+function handleTouchMove(e) {
+  e.preventDefault();
+  const touch = e.touches[0];
+  const mouseEvent = new MouseEvent('mousemove', {
+    clientX: touch.clientX,
+    clientY: touch.clientY
+  });
+  canvas.dispatchEvent(mouseEvent);
+}
+
+function saveAnnotationState() {
+  historyIndex++;
+  if (historyIndex < annotationHistory.length) {
+    annotationHistory.length = historyIndex;
+  }
+  annotationHistory.push(canvas.toDataURL());
+}
+
+function redrawCanvas() {
+  if (historyIndex >= 0 && annotationHistory[historyIndex]) {
+    const img = new Image();
+    img.onload = () => ctx.drawImage(img, 0, 0);
+    img.src = annotationHistory[historyIndex];
+  }
+}
+
+function undoAnnotation() {
+  if (historyIndex > 0) {
+    historyIndex--;
+    const img = new Image();
+    img.onload = () => ctx.drawImage(img, 0, 0);
+    img.src = annotationHistory[historyIndex];
+  }
+}
+
+function redoAnnotation() {
+  if (historyIndex < annotationHistory.length - 1) {
+    historyIndex++;
+    const img = new Image();
+    img.onload = () => ctx.drawImage(img, 0, 0);
+    img.src = annotationHistory[historyIndex];
+  }
+}
+
+function clearAnnotations() {
+  if (confirm('Limpar todas as anotações?')) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(originalImage, 0, 0);
+    saveAnnotationState();
+  }
+}
+
+function saveAnnotatedImage() {
+  // Converter canvas para imagem e salvar
+  const annotatedData = canvas.toDataURL('image/png');
+  
+  // Atualizar a foto na galéria
+  if (currentPhotoIndex >= 0 && currentPhotoIndex < galleryPhotos.length) {
+    galleryPhotos[currentPhotoIndex].src = annotatedData;
+    renderGallery();
+  }
+  
+  closeLightbox();
+  toast('✅ Anotações salvas!', 'success');
+}
+
+// ═══════════════════════════════════════════════
+// Limpar galéria ao criar novo laudo
 function clearGallery() {
   galleryPhotos = [];
   currentPhotoIndex = 0;
