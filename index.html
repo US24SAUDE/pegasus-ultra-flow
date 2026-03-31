@@ -1485,9 +1485,18 @@ function stopVoice() {
   btn.classList.remove('recording');
   btn.textContent = '🎙';
   document.getElementById('voiceCockpit').classList.remove('recording');
-  document.getElementById('voiceStatus').textContent = '✅ Pronto — clique em "Gerar Laudo com IA"';
+  document.getElementById('voiceStatus').textContent = '✅ Gerando laudo automaticamente...';
   document.getElementById('voiceStatus').classList.remove('active');
   document.getElementById('voiceWaveform').classList.remove('visible');
+  
+  // Auto-gerar laudo após 1 segundo (deixa a transcrição estabilizar)
+  setTimeout(() => {
+    if (voiceTranscript.trim()) {
+      gerarLaudo();
+    } else {
+      document.getElementById('voiceStatus').textContent = '⚠ Nenhuma fala detectada. Tente novamente.';
+    }
+  }, 1000);
 }
 
 function limparVoz() {
@@ -1578,23 +1587,36 @@ async function gerarLaudo() {
 
   const nome = document.getElementById('nomePaciente').value;
   const idade = document.getElementById('idade').value;
+  const sexo = document.getElementById('sexo')?.value || '';
   const tipo = document.getElementById('tipoExame').value || 'ultrassonografia';
+  const indicacao = document.getElementById('indicacao').value || '';
 
   showLoading('Gerando laudo com Gemini...', 'Processando achados e criando laudo técnico');
 
-  const prompt = `Você é um radiologista especialista em ultrassonografia. Gere um laudo técnico profissional completo em português brasileiro.
+  // Montar referência de snippets por tipo de exame
+  let snippetsRef = '';
+  Object.entries(SNIPPETS).forEach(([cat, items]) => {
+    const relevantes = items.filter(s => tipo.toLowerCase().includes(cat.toLowerCase()) || cat.toLowerCase().includes(tipo.toLowerCase()));
+    if (relevantes.length > 0) {
+      snippetsRef += `\n${cat}:\n` + relevantes.map(s => `  - ${s.t}: ${s.v}`).join('\n');
+    }
+  });
 
-Dados:
-- Exame: ${tipo}${nome ? '\n- Paciente: ' + nome : ''}${idade ? '\n- Idade: ' + idade + ' anos' : ''}
+  const prompt = `Você é um radiologista especialista em ultrassonografia. Gere um laudo técnico profissional completo em português brasileiro, usando os snippets como referência quando apropriado.
 
-Descrição dos achados (ditado pelo médico):
+DADOS DO PACIENTE:
+- Exame: ${tipo}${nome ? '\n- Paciente: ' + nome : ''}${idade ? '\n- Idade: ' + idade + ' anos' : ''}${sexo ? '\n- Sexo: ' + sexo : ''}${indicacao ? '\n- Indicação Clínica: ' + indicacao : ''}
+
+DESCRIÇÃO DOS ACHADOS (ditado pelo médico):
 "${descricao}"
 
-Gere o laudo com:
-1. ACHADOS: Descrição técnica detalhada. Complete com valores normais para órgãos não mencionados.
-2. CONCLUSÃO: Impressão diagnóstica objetiva e concisa.
+REFERÊNCIAS DE SNIPPETS DISPONÍVEIS:${snippetsRef || '\n  (Nenhum snippet específico para este tipo de exame)'}
 
-Formato exato:
+GERE O LAUDO COM:
+1. ACHADOS: Descrição técnica detalhada e completa. Use os snippets como base quando relevante. Complete com valores normais para órgãos não mencionados.
+2. CONCLUSÃO: Impressão diagnóstica objetiva e concisa, correlacionando com a indicação clínica.
+
+FORMATO EXATO:
 ACHADOS:
 [texto]
 
@@ -1613,19 +1635,29 @@ CONCLUSÃO:
     const laudoTexto = data.candidates[0].content.parts[0].text;
     currentLaudoText = laudoTexto;
 
-    const achadosMatch = laudoTexto.match(/ACHADOS[:\s]*([\s\S]*?)(?=CONCLUS[ÃA]O|$)/i);
-    const conclusaoMatch = laudoTexto.match(/CONCLUS[ÃA]O[:\s]*([\s\S]*?)$/i);
+    const achadosMatch = laudoTexto.match(/ACHADOS[:\s]*(([\s\S]*?)(?=CONCLUS[ÃA]O|$)/i);
+    const conclusaoMatch = laudoTexto.match(/CONCLUS[ÃA]O[:\s]*(([\s\S]*?)$/i);
 
-    if (achadosMatch) document.getElementById('achados').value = achadosMatch[1].trim();
-    if (conclusaoMatch) document.getElementById('conclusao').value = conclusaoMatch[1].trim();
+    if (achadosMatch) {
+      const achadosText = achadosMatch[1].trim();
+      document.getElementById('achados').value = achadosText;
+    }
+    if (conclusaoMatch) {
+      const conclusaoText = conclusaoMatch[1].trim();
+      document.getElementById('conclusao').value = conclusaoText;
+    }
 
     document.getElementById('laudoBox').textContent = laudoTexto;
     document.getElementById('laudoOutput').classList.add('visible');
     document.getElementById('laudoOutput').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    
+    // Atualizar status de voz
+    document.getElementById('voiceStatus').textContent = '✅ Laudo gerado com sucesso!';
 
-    toast('✅ Laudo gerado!', 'success');
+    toast('✅ Laudo gerado automaticamente!', 'success');
   } catch (err) {
     toast('Erro ao gerar laudo: ' + err.message, 'error');
+    document.getElementById('voiceStatus').textContent = '❌ Erro ao gerar laudo. Tente novamente.';
   } finally {
     hideLoading();
   }
