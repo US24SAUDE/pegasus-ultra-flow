@@ -304,6 +304,261 @@ body {
 }
 
 /* ═══════════════════════════════════════════════
+   GALERIA DE FOTOS
+═══════════════════════════════════════════════ */
+.gallery-section {
+  margin: 16px 0;
+  padding: 16px;
+  background: var(--surface2);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+}
+
+.gallery-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.gallery-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0;
+}
+
+.gallery-counter {
+  font-size: 12px;
+  color: var(--text2);
+  background: var(--surface);
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.gallery-upload-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  border: 2px dashed var(--border2);
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, var(--surface), var(--surface2));
+  cursor: pointer;
+  transition: all var(--transition);
+  margin-bottom: 12px;
+}
+
+.gallery-upload-zone:hover {
+  border-color: var(--accent);
+  background: linear-gradient(135deg, var(--surface2), var(--surface));
+}
+
+.gallery-upload-zone.drag-over {
+  border-color: var(--accent);
+  background: var(--accent);
+  background: linear-gradient(135deg, rgba(100,200,255,0.1), rgba(150,100,255,0.1));
+}
+
+.upload-icon {
+  font-size: 32px;
+  margin-bottom: 8px;
+}
+
+.upload-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.upload-hint {
+  font-size: 12px;
+  color: var(--text2);
+}
+
+/* GRADE 3x2 */
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+@media (max-width: 768px) {
+  .gallery-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .gallery-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.gallery-item {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.gallery-item:hover {
+  border-color: var(--accent);
+  box-shadow: 0 4px 12px rgba(100, 200, 255, 0.2);
+  transform: scale(1.02);
+}
+
+.gallery-thumbnail {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.gallery-item-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--transition);
+}
+
+.gallery-item:hover .gallery-item-overlay {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.gallery-btn-delete {
+  background: rgba(255, 100, 100, 0.9);
+  border: none;
+  color: white;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition);
+  opacity: 0;
+}
+
+.gallery-item:hover .gallery-btn-delete {
+  opacity: 1;
+}
+
+.gallery-btn-delete:hover {
+  background: rgba(255, 50, 50, 1);
+  transform: scale(1.1);
+}
+
+/* LIGHTBOX */
+.gallery-lightbox {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.9);
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+
+.gallery-lightbox.visible {
+  display: flex;
+}
+
+.lightbox-content {
+  position: relative;
+  max-width: 90vw;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#lightboxImage {
+  max-width: 100%;
+  max-height: 80vh;
+  object-fit: contain;
+  border-radius: 8px;
+  animation: zoomIn 0.3s ease-out;
+}
+
+@keyframes zoomIn {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.lightbox-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(255, 100, 100, 0.9);
+  border: none;
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition);
+  z-index: 10000;
+}
+
+.lightbox-close:hover {
+  background: rgba(255, 50, 50, 1);
+  transform: scale(1.1);
+}
+
+.lightbox-nav {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.lightbox-btn {
+  background: rgba(100, 200, 255, 0.9);
+  border: none;
+  color: white;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition);
+}
+
+.lightbox-btn:hover {
+  background: rgba(100, 200, 255, 1);
+  transform: scale(1.1);
+}
+
+.lightbox-counter {
+  color: white;
+  font-size: 14px;
+  font-weight: 600;
+  min-width: 60px;
+  text-align: center;
+}
+
+/* ═══════════════════════════════════════════════
    OCR ZONE
 ═══════════════════════════════════════════════ */
 .ocr-zone {
@@ -1185,6 +1440,33 @@ textarea { resize: vertical; min-height: 100px; line-height: 1.65; font-size: 13
           <label>Conclusão</label>
           <textarea id="conclusao" placeholder="Conclusão do laudo..." style="min-height:72px"></textarea>
         </div>
+
+        <!-- GALERIA DE FOTOS DO EXAME -->
+        <div class="gallery-section" id="gallerySection">
+          <div class="gallery-header">
+            <h3 class="gallery-title">📸 Fotos do Exame</h3>
+            <span class="gallery-counter" id="photoCounter">0/6</span>
+          </div>
+          <div class="gallery-upload-zone" id="galleryUploadZone">
+            <input type="file" id="galleryInput" accept="image/*" multiple onchange="handleGalleryUpload(event)" style="display:none">
+            <div class="upload-icon">📷</div>
+            <div class="upload-text">Clique ou arraste fotos do exame</div>
+            <div class="upload-hint">Máximo 6 fotos • Formatos: JPG, PNG, WebP</div>
+          </div>
+          <div class="gallery-grid" id="galleryGrid"></div>
+          <div class="gallery-lightbox" id="galleryLightbox">
+            <div class="lightbox-content">
+              <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+              <img id="lightboxImage" alt="">
+              <div class="lightbox-nav">
+                <button class="lightbox-btn" onclick="prevPhoto()">❮</button>
+                <span class="lightbox-counter" id="lightboxCounter"></span>
+                <button class="lightbox-btn" onclick="nextPhoto()">❯</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="btn-row">
           <button class="btn btn-success" onclick="salvarLaudo()">💾 Salvar</button>
           <button class="btn btn-gold" onclick="imprimirLaudo()">🖨 Imprimir</button>
@@ -1277,8 +1559,131 @@ let currentLaudoText = '';
 const getApiKey = () => localStorage.getItem('puf_api_key') || '';
 
 // ═══════════════════════════════════════════════
-// SNIPPETS (111 completos)
+//  GALERIA DE FOTOS
+  ═══════════════════════════════════════════════
+let galleryPhotos = [];
+let currentPhotoIndex = 0;
+
+function handleGalleryUpload(event) {
+  const files = Array.from(event.target.files);
+  const maxPhotos = 6;
+  const totalPhotos = galleryPhotos.length + files.length;
+
+  if (totalPhotos > maxPhotos) {
+    toast(`Máximo ${maxPhotos} fotos permitidas. Você tem ${galleryPhotos.length} e está tentando adicionar ${files.length}.`, 'error');
+    return;
+  }
+
+  files.forEach(file => {
+    if (!file.type.startsWith('image/')) {
+      toast(`${file.name} não é uma imagem válida`, 'error');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      galleryPhotos.push({
+        src: e.target.result,
+        name: file.name,
+        size: (file.size / 1024).toFixed(2)
+      });
+      renderGallery();
+      updatePhotoCounter();
+      toast(`✅ Foto adicionada (${galleryPhotos.length}/${maxPhotos})`, 'success');
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // Limpar input
+  event.target.value = '';
+}
+
+function renderGallery() {
+  const grid = document.getElementById('galleryGrid');
+  grid.innerHTML = '';
+
+  galleryPhotos.forEach((photo, index) => {
+    const item = document.createElement('div');
+    item.className = 'gallery-item';
+    item.innerHTML = `
+      <img src="${photo.src}" alt="Foto ${index + 1}" class="gallery-thumbnail" onclick="openLightbox(${index})">
+      <div class="gallery-item-overlay">
+        <button class="gallery-btn-delete" onclick="deletePhoto(${index})" title="Remover">🗑</button>
+      </div>
+    `;
+    grid.appendChild(item);
+  });
+
+  // Mostrar/esconder zona de upload
+  const uploadZone = document.getElementById('galleryUploadZone');
+  if (galleryPhotos.length >= 6) {
+    uploadZone.style.display = 'none';
+  } else {
+    uploadZone.style.display = 'flex';
+  }
+}
+
+function updatePhotoCounter() {
+  document.getElementById('photoCounter').textContent = `${galleryPhotos.length}/6`;
+}
+
+function deletePhoto(index) {
+  if (confirm('Remover esta foto?')) {
+    galleryPhotos.splice(index, 1);
+    renderGallery();
+    updatePhotoCounter();
+    toast('✅ Foto removida', 'success');
+  }
+}
+
+function openLightbox(index) {
+  currentPhotoIndex = index;
+  const photo = galleryPhotos[index];
+  document.getElementById('lightboxImage').src = photo.src;
+  document.getElementById('lightboxCounter').textContent = `${index + 1}/${galleryPhotos.length}`;
+  document.getElementById('galleryLightbox').classList.add('visible');
+}
+
+function closeLightbox() {
+  document.getElementById('galleryLightbox').classList.remove('visible');
+}
+
+function nextPhoto() {
+  currentPhotoIndex = (currentPhotoIndex + 1) % galleryPhotos.length;
+  openLightbox(currentPhotoIndex);
+}
+
+function prevPhoto() {
+  currentPhotoIndex = (currentPhotoIndex - 1 + galleryPhotos.length) % galleryPhotos.length;
+  openLightbox(currentPhotoIndex);
+}
+
+// Drag & drop para galeria
+const uploadZone = document.getElementById('galleryUploadZone');
+if (uploadZone) {
+  uploadZone.addEventListener('dragover', e => { e.preventDefault(); uploadZone.classList.add('drag-over'); });
+  uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+  uploadZone.addEventListener('drop', e => {
+    e.preventDefault();
+    uploadZone.classList.remove('drag-over');
+    const files = e.dataTransfer.files;
+    document.getElementById('galleryInput').files = files;
+    handleGalleryUpload({ target: { files } });
+  });
+  uploadZone.addEventListener('click', () => document.getElementById('galleryInput').click());
+}
+
 // ═══════════════════════════════════════════════
+// Limpar galeria ao criar novo laudo
+function clearGallery() {
+  galleryPhotos = [];
+  currentPhotoIndex = 0;
+  document.getElementById('galleryGrid').innerHTML = '';
+  updatePhotoCounter();
+  document.getElementById('galleryUploadZone').style.display = 'flex';
+}
+
+  SNIPPETS (111 completos)// ═══════════════════════════════════════════════
 const SNIPPETS = {
   'Abdome': [
     {t:'Abdome Normal', v:'Fígado de morfologia, contornos e dimensões normais, com ecotextura e ecogenicidade preservadas. Lobo direito medindo 14,5 cm (VR até 15 cm). Veia porta de calibre normal (0,9 cm). Vesícula biliar de paredes finas e lisas, sem cálculos. Vias biliares intra e extra-hepáticas de calibres normais. Pâncreas de dimensões e ecotextura habituais. Baço de dimensões normais, medindo 10,5 cm. Rins de morfologia e contornos normais, com diferenciação corticomedular preservada, sem cálculos ou dilatações. Aorta de calibre normal. Ausência de líquido livre intraperitoneal.'},
@@ -1759,6 +2164,7 @@ function novoLaudo() {
   document.getElementById('laudoOutput').classList.remove('visible');
   document.getElementById('voiceStatus').textContent = 'Pressione e fale os achados';
   document.getElementById('ocrResult').classList.remove('visible');
+  clearGallery(); // Limpar galeria de fotos
   voiceTranscript = '';
   currentLaudoText = '';
   if (isRecording) stopVoice();
